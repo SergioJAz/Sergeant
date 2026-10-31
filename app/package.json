@@ -32,7 +32,10 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "check:emdash": "node ../scripts/check-em-dash.mjs",
+    "build:web": "node ../scripts/check-em-dash.mjs && expo export -p web",
+    "eas-build-pre-install": "node ../scripts/check-em-dash.mjs"
   },
   "private": true
 }
