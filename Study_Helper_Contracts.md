@@ -1,7 +1,7 @@
 ---
 ontology: true
 type: spec
-domain: study-helper
+domain: sergeant
 summary: Stage A contracts for Study Helper (sync, timer, progress, time, lifecycle, exams, CSV, snapshot, scheduling, notifications, stats) plus spec conflict resolution
 status: active
 tags: [study-helper, contracts, stage-a, sync, timer, csv-import, scheduler]

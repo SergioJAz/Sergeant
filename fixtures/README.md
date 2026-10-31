@@ -1,7 +1,7 @@
 ---
 type: doc
 status: active
-domain: study-helper
+domain: sergeant
 summary: Stage A fixtures for Study Helper (tracker migration, CSV import, scheduler) with the contract section and AC each one covers
 tags: [study-helper, fixtures, stage-a, migration, csv-import, scheduler]
 relatedTo: [Study_Helper_Contracts, Study_Helper_Decisions, Study_Helper_App_Spec, Study_Helper_Task_List]
