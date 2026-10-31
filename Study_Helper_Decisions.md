@@ -1,7 +1,7 @@
 ---
 ontology: true
 type: decision-record
-domain: study-helper
+domain: sergeant
 summary: Answers to section 0 decisions (Q1 to Q8, D01 to D08, later config), taken from the BA analysis recommendations
 status: active
 tags: [study-helper, decisions, contracts]

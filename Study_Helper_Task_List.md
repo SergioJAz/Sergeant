@@ -1,7 +1,7 @@
 ---
 ontology: true
 type: task-list
-domain: study-helper
+domain: sergeant
 summary: Task list derived from the Study Helper BA analysis, ordered by delivery stage A to G
 status: active
 tags: [study-helper, tasks, backlog, planning]
