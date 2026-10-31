@@ -1,0 +1,58 @@
+{
+  "scenario": "Cloud exam Wed 4 Nov 11:00 with travel, rest after, and exam-eve exemption from 2-then-switch on Tue 3 Nov",
+  "covers": ["Contracts 6 exam interval (due_at - 30 to due_at + 120 + 30), rest block after, exam eve", "Contracts 9 level 2 and 4", "Spec 13 rest block after each exam, 2-then-switch except exam eve", "AC15"],
+  "expected_style": "exact study blocks on the eve and the exact rest block; DL warnings not asserted (DL due is beyond the horizon)",
+  "input": {
+    "now": "2026-11-03T06:00:00Z",
+    "timezone": "Asia/Beirut",
+    "horizonDays": 2,
+    "settings": {
+      "pomodoro": { "study_min": 50, "break_min": 10, "long_break_min": 25, "long_break_every": 3 },
+      "switch_after_blocks": 2,
+      "wake": "08:20",
+      "hard_stop": "23:00",
+      "review": { "start": "22:00", "end": "22:30" },
+      "lunch": { "start": "13:00", "end": "14:00" },
+      "sunday_off_from": "14:00",
+      "rest_after_exam_min": 50,
+      "exam_defaults": { "duration_min": 120, "travel_before_min": 30, "travel_after_min": 30 }
+    },
+    "fixedEvents": [
+      { "id": "fe-sleep", "label": "Sleep", "kind": "sleep", "weekdays": [1, 2, 3, 4, 5, 6, 7], "start_time": "00:30", "end_time": "08:20", "never_cut": false }
+    ],
+    "oneoffs": [
+      { "id": "oo-tue-am", "label": "Classes and gym", "kind": "blocked", "date": "2026-11-03", "start_time": "08:20", "end_time": "14:30" },
+      { "id": "oo-tue-pm", "label": "Family dinner", "kind": "blocked", "date": "2026-11-03", "start_time": "18:30", "end_time": "23:00" },
+      { "id": "oo-wed-am", "label": "Morning", "kind": "blocked", "date": "2026-11-04", "start_time": "08:20", "end_time": "10:30" },
+      { "id": "oo-cloud-exam", "label": "Cloud exam", "kind": "exam", "item_id": "00000000-0000-4000-8000-00000000a401", "date": "2026-11-04", "start_time": "10:30", "end_time": "13:30" },
+      { "id": "oo-wed-pm", "label": "Off", "kind": "off", "date": "2026-11-04", "start_time": "14:20", "end_time": "23:00" }
+    ],
+    "items": [
+      { "id": "00000000-0000-4000-8000-00000000a401", "course_id": "c-cloud", "type": "exam", "title": "Cloud midterm", "due_at": "2026-11-04T09:00:00Z", "duration_min": 120, "travel_before_min": 30, "travel_after_min": 30, "due_confirmed": false, "priority_boost": 0, "status": "active" },
+      { "id": "00000000-0000-4000-8000-00000000a402", "course_id": "c-dl", "type": "exam", "title": "DL final", "due_at": "2026-11-19T07:30:00Z", "duration_min": 120, "travel_before_min": 30, "travel_after_min": 30, "due_confirmed": false, "priority_boost": 0, "status": "active" }
+    ],
+    "chunks": [
+      { "id": "00000000-0000-4000-8000-00000000c411", "item_id": "00000000-0000-4000-8000-00000000a401", "order": 1, "title": "MapReduce notes", "kind": "notes", "est_min": 200, "est_unit_min": 50, "done_min": 0, "status": "todo" },
+      { "id": "00000000-0000-4000-8000-00000000c412", "item_id": "00000000-0000-4000-8000-00000000a401", "order": 2, "title": "HDFS problems", "kind": "problems", "est_min": 200, "est_unit_min": 50, "done_min": 0, "status": "todo" },
+      { "id": "00000000-0000-4000-8000-00000000c421", "item_id": "00000000-0000-4000-8000-00000000a402", "order": 1, "title": "CNN notes", "kind": "notes", "est_min": 150, "est_unit_min": 50, "done_min": 0, "status": "todo" }
+    ],
+    "blocks": []
+  },
+  "expected": {
+    "exam_interval_local": { "date": "2026-11-04", "start": "10:30", "end": "13:30", "check": "due_at 09:00Z = 11:00 local (UTC+2 after 25 Oct); minus 30 travel; plus 120 duration and 30 travel" },
+    "required_blocks": [
+      { "date": "2026-11-03", "start": "14:30", "end": "15:20", "item_id": "00000000-0000-4000-8000-00000000a401", "chunk_ids": ["00000000-0000-4000-8000-00000000c411"] },
+      { "date": "2026-11-03", "start": "15:30", "end": "16:20", "item_id": "00000000-0000-4000-8000-00000000a401", "chunk_ids": ["00000000-0000-4000-8000-00000000c411"] },
+      { "date": "2026-11-03", "start": "16:30", "end": "17:20", "item_id": "00000000-0000-4000-8000-00000000a401", "chunk_ids": ["00000000-0000-4000-8000-00000000c411"] },
+      { "date": "2026-11-04", "start": "13:30", "end": "14:20", "type": "Rest" }
+    ],
+    "eve_check": "3 consecutive Cloud blocks on 2026-11-03 are allowed because it is the Cloud exam eve; without the exemption block 3 would be DL",
+    "capacity_note": "Tue window 14:30-18:30 is 240 min: three blocks plus two short breaks end 17:20, then a 25-minute long break leaves 17:45-18:30 (45 min), too short",
+    "forbidden_local_intervals": ["2026-11-04 10:30-13:30 exam"],
+    "no_study_blocks_on": ["2026-11-04"],
+    "warnings_required": [
+      { "type": "overload", "item_id": "00000000-0000-4000-8000-00000000a401", "short_min": 250, "due_at": "2026-11-04T09:00:00Z" }
+    ],
+    "warnings_forbidden": [ { "type": "rule_relaxed", "date": "2026-11-03" } ]
+  }
+}

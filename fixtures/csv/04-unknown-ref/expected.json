@@ -1,0 +1,15 @@
+{
+  "case": "unknown and archived references",
+  "covers": ["Contracts 7 identity (zero matches -> unknown)", "Contracts 7 rejects references to archived parents", "AC07"],
+  "base_state": "../base-state.json",
+  "files": ["blocks_import.csv"],
+  "rows": [
+    { "row": 1, "op": "update", "status": "rejected", "errors": [ { "code": "unknown", "field": "id", "value": "00000000-0000-4000-8000-000000000399" } ], "note": "id is given, so there is no fallback to legacy_key or names" },
+    { "row": 2, "op": "add", "status": "rejected", "errors": [ { "code": "unknown", "field": "item", "value": "Lab reprot" } ] },
+    { "row": 3, "op": "add", "status": "rejected", "errors": [ { "code": "unknown", "field": "course", "value": "Bio" } ] },
+    { "row": 4, "op": "add", "status": "rejected", "errors": [ { "code": "archived_parent", "field": "course", "value": "Fuzzy" } ], "note": "Fuzzy and its item are archived. Active-only name lookup would give unknown; either code passes if the message names the archived parent." },
+    { "row": 5, "op": "delete", "status": "rejected", "errors": [ { "code": "unknown", "field": "legacy_key", "value": "9999-0000-Cloud" } ] },
+    { "row": 6, "op": "add", "status": "rejected", "errors": [ { "code": "unknown", "field": "chunks", "value": "Spark notes" } ] }
+  ],
+  "summary": { "adds": 0, "updates": 0, "deletes": 0, "rejected": 6, "protected": 0 }
+}

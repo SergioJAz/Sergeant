@@ -1,0 +1,54 @@
+{
+  "scenario": "constraint-saturated day: sleep, commute, classes, exam with travel, rest after exam, locked block and never_cut sport leave no 50-minute study slot",
+  "covers": ["AC12", "Contracts 9 levels 1-4 never yield", "Contracts 6 exam occupied interval and rest after", "Contracts 9 overload"],
+  "expected_style": "properties: required blocks, forbidden intervals and exact warnings. Breaks and review blocks are not asserted.",
+  "input": {
+    "now": "2026-11-02T06:00:00Z",
+    "timezone": "Asia/Beirut",
+    "horizonDays": 1,
+    "settings": {
+      "pomodoro": { "study_min": 50, "break_min": 10, "long_break_min": 25, "long_break_every": 3 },
+      "switch_after_blocks": 2,
+      "wake": "08:20",
+      "hard_stop": "23:00",
+      "review": { "start": "22:00", "end": "22:30" },
+      "lunch": { "start": "13:00", "end": "14:00" },
+      "sunday_off_from": "14:00",
+      "rest_after_exam_min": 50,
+      "exam_defaults": { "duration_min": 120, "travel_before_min": 30, "travel_after_min": 30 }
+    },
+    "fixedEvents": [
+      { "id": "fe-sleep", "label": "Sleep", "kind": "sleep", "weekdays": [1, 2, 3, 4, 5, 6, 7], "start_time": "00:30", "end_time": "08:20", "never_cut": false },
+      { "id": "fe-commute-am", "label": "Commute", "kind": "commute", "weekdays": [1, 2, 3, 4], "start_time": "08:50", "end_time": "09:30", "never_cut": false },
+      { "id": "fe-class-mw", "label": "Classes", "kind": "class", "weekdays": [1, 3], "start_time": "09:30", "end_time": "14:00", "never_cut": false },
+      { "id": "fe-commute-pm", "label": "Commute", "kind": "commute", "weekdays": [1, 3], "start_time": "14:00", "end_time": "14:30", "never_cut": false },
+      { "id": "fe-muaythai", "label": "Muay Thai", "kind": "sport", "weekdays": [1, 3, 5], "start_time": "18:40", "end_time": "21:20", "never_cut": true }
+    ],
+    "oneoffs": [
+      { "id": "oo-dl-quiz", "label": "DL quiz", "kind": "exam", "item_id": "00000000-0000-4000-8000-00000000a102", "date": "2026-11-02", "start_time": "15:30", "end_time": "17:30" }
+    ],
+    "items": [
+      { "id": "00000000-0000-4000-8000-00000000a101", "course_id": "c-cloud", "type": "homework", "title": "Cloud HW3", "due_at": "2026-11-03T06:00:00Z", "due_confirmed": true, "priority_boost": 0, "status": "active" },
+      { "id": "00000000-0000-4000-8000-00000000a102", "course_id": "c-dl", "type": "exam", "title": "DL quiz", "due_at": "2026-11-02T14:00:00Z", "duration_min": 60, "travel_before_min": 30, "travel_after_min": 30, "due_confirmed": true, "priority_boost": 0, "status": "active" }
+    ],
+    "chunks": [
+      { "id": "00000000-0000-4000-8000-00000000c101", "item_id": "00000000-0000-4000-8000-00000000a101", "order": 1, "title": "Spark problems", "kind": "problems", "est_min": 300, "est_unit_min": 50, "done_min": 0, "status": "todo" }
+    ],
+    "blocks": [
+      { "id": "00000000-0000-4000-8000-00000000b101", "date": "2026-11-02", "start": "14:40", "end": "15:30", "course_id": "c-cloud", "item_id": "00000000-0000-4000-8000-00000000a101", "chunk_ids": ["00000000-0000-4000-8000-00000000c101"], "type": "Problems", "source": "claude", "locked": true, "status": "planned" }
+    ]
+  },
+  "expected": {
+    "free_gaps_local": ["08:20-08:50 (30)", "14:30-14:40 (10)", "18:20-18:40 (20)", "21:20-22:00 (40)", "22:30-23:00 (30)"],
+    "new_study_blocks": 0,
+    "required_blocks": [
+      { "date": "2026-11-02", "start": "17:30", "end": "18:20", "type": "Rest", "why": "rest after DL quiz exam interval 15:30-17:30 (Contracts 6)" }
+    ],
+    "unchanged_blocks": ["00000000-0000-4000-8000-00000000b101"],
+    "forbidden_local_intervals": ["09:30-14:00 class", "15:30-17:30 exam", "18:40-21:20 never_cut sport", "after 23:00"],
+    "warnings": [
+      { "type": "overload", "item_id": "00000000-0000-4000-8000-00000000a101", "short_min": 300, "due_at": "2026-11-03T06:00:00Z" }
+    ],
+    "no_warning_types": ["rule_relaxed", "protected_conflict"]
+  }
+}

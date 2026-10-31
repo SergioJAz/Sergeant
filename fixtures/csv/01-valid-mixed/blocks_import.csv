@@ -1,0 +1,6 @@
+op,ref,id,legacy_key,date,start,end,course,item,chunks,what,type,subtasks,locked
+add,new-1,,,2026-11-05,15:00,15:50,Cloud,Cloud midterm,HDFS problems,HDFS problems set 1,Problems,"Examples|20; Problems|30",true
+add,new-2,,,2026-11-05,16:00,16:50,DL,00000000-0000-4000-8000-000000000104,CNN notes,CNN notes part 2,Notes,,true
+update,,00000000-0000-4000-8000-000000000301,,2026-11-02,15:10,16:00,Cloud,Cloud midterm,MapReduce notes,MapReduce notes,Notes,,false
+update,,,1103-1500-Cloud,2026-11-03,17:00,17:50,Cloud,Cloud midterm,MapReduce notes,MapReduce notes,Notes,,false
+delete,,00000000-0000-4000-8000-000000000305,,,,,,,,,,,

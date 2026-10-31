@@ -1,0 +1,9 @@
+{
+  "case": "unknown column in header",
+  "covers": ["Contracts 7 header row required, unknown columns rejected"],
+  "base_state": "../base-state.json",
+  "files": ["blocks_import.csv"],
+  "file_errors": [ { "code": "unknown_column", "column": "notes" } ],
+  "rows": [],
+  "summary": { "adds": 0, "updates": 0, "deletes": 0, "rejected": "whole file", "protected": 0 }
+}

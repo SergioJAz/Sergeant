@@ -1,0 +1,47 @@
+{
+  "scenario": "estimate exceeds capacity before the due date",
+  "covers": ["AC15", "Contracts 9 overload { item_id, short_min, due_at }", "Contracts 3 est_min / done_min"],
+  "expected_style": "exact study blocks and warning; breaks not asserted",
+  "input": {
+    "now": "2026-11-07T06:00:00Z",
+    "timezone": "Asia/Beirut",
+    "horizonDays": 2,
+    "settings": {
+      "pomodoro": { "study_min": 50, "break_min": 10, "long_break_min": 25, "long_break_every": 3 },
+      "switch_after_blocks": 2,
+      "wake": "08:20",
+      "hard_stop": "23:00",
+      "review": { "start": "22:00", "end": "22:30" },
+      "lunch": { "start": "13:00", "end": "14:00" },
+      "sunday_off_from": "14:00",
+      "rest_after_exam_min": 50,
+      "exam_defaults": { "duration_min": 120, "travel_before_min": 30, "travel_after_min": 30 }
+    },
+    "fixedEvents": [
+      { "id": "fe-sleep", "label": "Sleep", "kind": "sleep", "weekdays": [1, 2, 3, 4, 5, 6, 7], "start_time": "00:30", "end_time": "08:20", "never_cut": false }
+    ],
+    "oneoffs": [
+      { "id": "oo-sat-am", "label": "Family", "kind": "blocked", "date": "2026-11-07", "start_time": "08:20", "end_time": "15:00" },
+      { "id": "oo-sat-pm", "label": "Wedding", "kind": "blocked", "date": "2026-11-07", "start_time": "17:00", "end_time": "23:00" }
+    ],
+    "items": [
+      { "id": "00000000-0000-4000-8000-00000000a301", "course_id": "c-dl", "type": "lab", "title": "DL Lab 3", "due_at": "2026-11-08T07:00:00Z", "due_confirmed": true, "priority_boost": 0, "status": "active" }
+    ],
+    "chunks": [
+      { "id": "00000000-0000-4000-8000-00000000c301", "item_id": "00000000-0000-4000-8000-00000000a301", "order": 1, "title": "Lab work", "kind": "lab_work", "est_min": 350, "est_unit_min": 50, "done_min": 50, "status": "partial" }
+    ],
+    "blocks": []
+  },
+  "expected": {
+    "remaining_min": 300,
+    "capacity_note": "Sat window 15:00-17:00 fits two 50-minute blocks with one break; Sun 08:20-09:00 before due (09:00 local) is 40 minutes, shorter than one study block",
+    "required_blocks": [
+      { "date": "2026-11-07", "start": "15:00", "end": "15:50", "item_id": "00000000-0000-4000-8000-00000000a301" },
+      { "date": "2026-11-07", "start": "16:00", "end": "16:50", "item_id": "00000000-0000-4000-8000-00000000a301" }
+    ],
+    "new_study_blocks": 2,
+    "warnings": [
+      { "type": "overload", "item_id": "00000000-0000-4000-8000-00000000a301", "short_min": 200, "due_at": "2026-11-08T07:00:00Z" }
+    ]
+  }
+}

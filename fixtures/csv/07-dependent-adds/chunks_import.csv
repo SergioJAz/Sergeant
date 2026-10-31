@@ -1,0 +1,6 @@
+op,ref,id,course,item,order,title,kind,source_ref,est_blocks,milestone_due
+add,new-3,,Cloud,@new-1,1,Setup cluster,lab_work,L9 p1-4,1,
+add,new-4,,Cloud,@new-1,2,Write jobs,problems,,2,2026-11-08
+add,new-5,,DL,@new-2,1,Read paper,notes,,1,
+add,new-6,,Cloud,@new-9,1,Ghost,notes,,1,
+add,new-7,,Cloud,Cloud midterm,4,Negative estimate,review,,-1,

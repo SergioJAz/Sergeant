@@ -1,0 +1,11 @@
+{
+  "case": "ambiguous item name",
+  "covers": ["Contracts 7 identity (two or more active matches -> ambiguous with candidate ids)", "G11", "AC07"],
+  "base_state": "../base-state.json",
+  "files": ["blocks_import.csv"],
+  "rows": [
+    { "row": 1, "op": "add", "status": "rejected", "errors": [ { "code": "ambiguous", "field": "item", "value": "Lab report", "candidates": ["00000000-0000-4000-8000-000000000102", "00000000-0000-4000-8000-000000000103"] } ] },
+    { "row": 2, "op": "add", "status": "valid", "resolved": { "item_id": "00000000-0000-4000-8000-000000000102" }, "note": "the same item given by id resolves" }
+  ],
+  "summary": { "adds": 1, "updates": 0, "deletes": 0, "rejected": 1, "protected": 0 }
+}

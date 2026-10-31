@@ -1,0 +1,12 @@
+{
+  "case": "end <= start and midnight crossing",
+  "covers": ["Contracts 7 rejects end <= start and blocks crossing midnight", "Contracts 4 blocks may not be overnight"],
+  "base_state": "../base-state.json",
+  "files": ["blocks_import.csv"],
+  "rows": [
+    { "row": 1, "op": "add", "status": "rejected", "errors": [ { "code": "end_not_after_start", "start": "15:50", "end": "15:00" } ] },
+    { "row": 2, "op": "add", "status": "rejected", "errors": [ { "code": "end_not_after_start", "start": "15:00", "end": "15:00" } ] },
+    { "row": 3, "op": "add", "status": "rejected", "errors": [ { "code": "crosses_midnight", "start": "23:30", "end": "00:20" } ], "note": "end <= start on a block means a midnight crossing; either code passes" }
+  ],
+  "summary": { "adds": 0, "updates": 0, "deletes": 0, "rejected": 3, "protected": 0 }
+}

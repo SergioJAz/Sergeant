@@ -1,0 +1,67 @@
+{
+  "scenario": "Asia/Beirut fall-back: clocks go from Sun 2026-10-25 00:00 EEST (UTC+3) back to Sat 2026-10-24 23:00 EET (UTC+2), so local 23:00-23:59 on Sat 24 Oct happens twice and Sat 24 Oct lasts 25 hours",
+  "covers": ["AC14", "Contracts 4 DST (ambiguous time uses first occurrence; nonexistent time moves forward; day boundary = local midnight)"],
+  "expected_style": "properties plus exact instant resolution tables (verified with Node Intl for Asia/Beirut on 2026-10-30)",
+  "input": {
+    "now": "2026-10-24T05:00:00Z",
+    "timezone": "Asia/Beirut",
+    "horizonDays": 2,
+    "settings": {
+      "pomodoro": { "study_min": 50, "break_min": 10, "long_break_min": 25, "long_break_every": 3 },
+      "switch_after_blocks": 2,
+      "wake": "08:20",
+      "hard_stop": "23:00",
+      "review": { "start": "22:00", "end": "22:30" },
+      "lunch": { "start": "13:00", "end": "14:00" },
+      "sunday_off_from": "14:00",
+      "rest_after_exam_min": 50,
+      "exam_defaults": { "duration_min": 120, "travel_before_min": 30, "travel_after_min": 30 }
+    },
+    "fixedEvents": [
+      { "id": "fe-sleep", "label": "Sleep", "kind": "sleep", "weekdays": [1, 2, 3, 4, 5, 6, 7], "start_time": "00:30", "end_time": "08:20", "never_cut": false },
+      { "id": "fe-gym-sat", "label": "Gym", "kind": "sport", "weekdays": [6], "start_time": "12:30", "end_time": "14:00", "never_cut": true }
+    ],
+    "oneoffs": [],
+    "items": [
+      { "id": "00000000-0000-4000-8000-00000000a601", "course_id": "c-dl", "type": "homework", "title": "DL HW1", "due_at": "2026-10-27T20:00:00Z", "due_confirmed": true, "priority_boost": 0, "status": "active" },
+      { "id": "00000000-0000-4000-8000-00000000a602", "course_id": "c-cloud", "type": "homework", "title": "Cloud HW2", "due_at": "2026-10-28T20:00:00Z", "due_confirmed": true, "priority_boost": 0, "status": "active" }
+    ],
+    "chunks": [
+      { "id": "00000000-0000-4000-8000-00000000c601", "item_id": "00000000-0000-4000-8000-00000000a601", "order": 1, "title": "Backprop exercises", "kind": "problems", "est_min": 1000, "est_unit_min": 50, "done_min": 0, "status": "todo" },
+      { "id": "00000000-0000-4000-8000-00000000c602", "item_id": "00000000-0000-4000-8000-00000000a602", "order": 1, "title": "Spark exercises", "kind": "problems", "est_min": 1000, "est_unit_min": 50, "done_min": 0, "status": "todo" }
+    ],
+    "blocks": [
+      { "id": "00000000-0000-4000-8000-00000000b601", "date": "2026-10-24", "start": "22:30", "end": "23:00", "course_id": "c-dl", "item_id": "00000000-0000-4000-8000-00000000a601", "chunk_ids": ["00000000-0000-4000-8000-00000000c601"], "type": "Review", "source": "claude", "locked": true, "status": "planned" }
+    ]
+  },
+  "expected": {
+    "wall_time_resolution": [
+      { "local": "2026-10-24 08:20", "instant": "2026-10-24T05:20:00Z", "note": "UTC+3" },
+      { "local": "2026-10-24 22:30", "instant": "2026-10-24T19:30:00Z", "note": "start of locked block b601" },
+      { "local": "2026-10-24 23:00", "instant": "2026-10-24T20:00:00Z", "note": "ambiguous; first occurrence (EEST). Hard stop and end of b601 resolve here" },
+      { "local": "2026-10-25 00:00", "instant": "2026-10-24T22:00:00Z", "note": "Sunday local midnight is 25 h after Saturday local midnight" },
+      { "local": "2026-10-25 08:20", "instant": "2026-10-25T06:20:00Z", "note": "UTC+2" },
+      { "local": "2026-10-25 14:00", "instant": "2026-10-25T12:00:00Z", "note": "Sunday off starts" },
+      { "local": "2027-03-28 00:30", "instant": "2027-03-27T22:00:00Z", "note": "spring-forward gap 00:00-00:59 does not exist; moves to first valid minute 01:00 EEST" }
+    ],
+    "instant_to_local_date": [
+      { "instant": "2026-10-23T21:00:00Z", "local_date": "2026-10-24" },
+      { "instant": "2026-10-24T20:59:00Z", "local_date": "2026-10-24", "local": "23:59 EEST" },
+      { "instant": "2026-10-24T21:30:00Z", "local_date": "2026-10-24", "local": "23:30 EET (second occurrence)" },
+      { "instant": "2026-10-24T22:10:00Z", "local_date": "2026-10-25", "local": "00:10 EET" }
+    ],
+    "durations": [
+      { "block": "00000000-0000-4000-8000-00000000b601", "minutes": 30 },
+      { "local_day": "2026-10-24", "minutes": 1500 }
+    ],
+    "properties": [
+      "b601 is returned unchanged",
+      "no new block ends after 2026-10-24T20:00:00Z on Saturday, so nothing is placed in either 23:00-23:59 hour",
+      "no new block on 2026-10-24 overlaps 12:30-14:00 local (gym, never_cut)",
+      "no new study block on 2026-10-25 starts before 06:20Z or at/after 12:00Z",
+      "every block date equals the local date of its start instant",
+      "durations are computed from resolved instants: a 50-minute block is 50 minutes of real time"
+    ],
+    "warnings_forbidden": [ { "type": "protected_conflict" } ]
+  }
+}

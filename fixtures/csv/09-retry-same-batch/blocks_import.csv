@@ -1,0 +1,3 @@
+op,ref,id,legacy_key,date,start,end,course,item,chunks,what,type,subtasks,locked
+add,new-1,,,2026-11-06,10:00,10:50,Cloud,Cloud midterm,HDFS problems,HDFS set 2,Problems,,true
+update,,00000000-0000-4000-8000-000000000301,,2026-11-02,15:00,15:50,Cloud,Cloud midterm,MapReduce notes,MapReduce notes v2,Notes,,false

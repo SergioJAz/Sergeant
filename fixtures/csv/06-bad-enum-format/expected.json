@@ -1,0 +1,15 @@
+{
+  "case": "bad enum, unknown op, bad date/time/boolean format",
+  "covers": ["Contracts 7 rejects unknown op, enum not in spec list, bad date/time format"],
+  "base_state": "../base-state.json",
+  "files": ["blocks_import.csv"],
+  "rows": [
+    { "row": 1, "op": "add", "status": "rejected", "errors": [ { "code": "bad_enum", "field": "type", "value": "Lecture", "allowed": ["Notes", "Problems", "Review", "Mock", "CheatSheet", "Buffer", "Rest", "Break"] } ] },
+    { "row": 2, "op": "upsert", "status": "rejected", "errors": [ { "code": "unknown_op", "value": "upsert", "allowed": ["add", "update", "delete"] } ] },
+    { "row": 3, "op": "add", "status": "rejected", "errors": [ { "code": "bad_date", "value": "2026/11/05", "expected": "YYYY-MM-DD" } ] },
+    { "row": 4, "op": "add", "status": "rejected", "errors": [ { "code": "bad_date", "value": "2026-11-31", "expected": "a real calendar date" } ] },
+    { "row": 5, "op": "add", "status": "rejected", "errors": [ { "code": "bad_time", "field": "start", "value": "9:00", "expected": "HH:MM" }, { "code": "bad_time", "field": "end", "value": "9:50", "expected": "HH:MM" } ] },
+    { "row": 6, "op": "add", "status": "rejected", "errors": [ { "code": "bad_enum", "field": "locked", "value": "yes", "allowed": ["true", "false"] } ] }
+  ],
+  "summary": { "adds": 0, "updates": 0, "deletes": 0, "rejected": 6, "protected": 0 }
+}

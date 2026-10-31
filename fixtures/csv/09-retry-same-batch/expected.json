@@ -1,0 +1,13 @@
+{
+  "case": "atomic apply and retry with the same batch_id",
+  "covers": ["Contracts 7 batch apply all-or-nothing with client batch_id", "AC08", "AC03 (no duplicates on retry)"],
+  "base_state": "../base-state.json",
+  "files": ["blocks_import.csv"],
+  "batch_id": "6f1c2b9e-3d4a-4e5f-8a7b-0c1d2e3f4a5b",
+  "attempts": [
+    { "attempt": 1, "inject": "fail inside the DB function after row 1 is written", "result": "error", "after": { "blocks_total": 5, "block_301_what": "MapReduce notes", "block_301_rev": 1, "import_batches": 0 } },
+    { "attempt": 2, "inject": "none", "result": "applied", "after": { "blocks_total": 6, "block_301_what": "MapReduce notes v2", "block_301_rev": 2, "import_batches": 1 } },
+    { "attempt": 3, "inject": "none", "result": "noop, returns the stored result of attempt 2", "after": { "blocks_total": 6, "block_301_what": "MapReduce notes v2", "block_301_rev": 2, "import_batches": 1 } }
+  ],
+  "summary": { "adds": 1, "updates": 1, "deletes": 0, "rejected": 0, "protected": 0 }
+}

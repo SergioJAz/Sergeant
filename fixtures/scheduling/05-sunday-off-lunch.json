@@ -1,0 +1,45 @@
+{
+  "scenario": "Sunday with plenty of work: lunch 13:00-14:00 and Sunday off from 14:00",
+  "covers": ["Contracts 9 level 4 (lunch, Sunday off from 14:00)", "D Q7 defaults", "Spec 13 2-then-switch"],
+  "expected_style": "properties only; exact slot packing before 13:00 is not asserted",
+  "input": {
+    "now": "2026-11-08T06:00:00Z",
+    "timezone": "Asia/Beirut",
+    "horizonDays": 1,
+    "settings": {
+      "pomodoro": { "study_min": 50, "break_min": 10, "long_break_min": 25, "long_break_every": 3 },
+      "switch_after_blocks": 2,
+      "wake": "08:20",
+      "hard_stop": "23:00",
+      "review": { "start": "22:00", "end": "22:30" },
+      "lunch": { "start": "13:00", "end": "14:00" },
+      "sunday_off_from": "14:00",
+      "rest_after_exam_min": 50,
+      "exam_defaults": { "duration_min": 120, "travel_before_min": 30, "travel_after_min": 30 }
+    },
+    "fixedEvents": [
+      { "id": "fe-sleep", "label": "Sleep", "kind": "sleep", "weekdays": [1, 2, 3, 4, 5, 6, 7], "start_time": "00:30", "end_time": "08:20", "never_cut": false }
+    ],
+    "oneoffs": [],
+    "items": [
+      { "id": "00000000-0000-4000-8000-00000000a501", "course_id": "c-dl", "type": "project", "title": "DL project", "due_at": "2026-11-12T20:00:00Z", "due_confirmed": true, "priority_boost": 0, "status": "active" },
+      { "id": "00000000-0000-4000-8000-00000000a502", "course_id": "c-cloud", "type": "homework", "title": "Cloud HW5", "due_at": "2026-11-14T20:00:00Z", "due_confirmed": true, "priority_boost": 0, "status": "active" }
+    ],
+    "chunks": [
+      { "id": "00000000-0000-4000-8000-00000000c501", "item_id": "00000000-0000-4000-8000-00000000a501", "order": 1, "title": "Model code", "kind": "lab_work", "est_min": 1000, "est_unit_min": 50, "done_min": 0, "status": "todo" },
+      { "id": "00000000-0000-4000-8000-00000000c502", "item_id": "00000000-0000-4000-8000-00000000a502", "order": 1, "title": "Problems", "kind": "problems", "est_min": 500, "est_unit_min": 50, "done_min": 0, "status": "todo" }
+    ],
+    "blocks": []
+  },
+  "expected": {
+    "properties": [
+      "every new study block on 2026-11-08 starts at or after 08:20 and ends at or before 13:00 local",
+      "no new study block overlaps 13:00-14:00 local",
+      "no new study block starts at or after 14:00 local (12:00Z)",
+      "at least 1 and at most 4 new study blocks (08:20-13:00 is 280 min: 4 x 50 + 2 x 10 + 1 x 25 = 245 fits, a 5th does not)",
+      "no 3 consecutive study blocks of the same course",
+      "every study block is 50 min"
+    ],
+    "warnings_forbidden": [ { "type": "rule_relaxed" }, { "type": "overload" } ]
+  }
+}

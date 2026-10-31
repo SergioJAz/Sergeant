@@ -1,0 +1,51 @@
+{
+  "scenario": "two items with identical pressure and due_at compete for one 50-minute slot",
+  "covers": ["AC13", "Contracts 9 tie-break (pressure desc, due_at asc, item.id asc)", "Contracts 9 deterministic uuid v5 ids", "AC15"],
+  "expected_style": "exact for the single block except its id; id is checked for equality across runs because the uuid v5 namespace is not fixed in the contracts.",
+  "determinism_runs": [
+    "run input as given twice: outputs deep-equal, including block ids and warning order",
+    "run with items[] and chunks[] reversed: output deep-equal to the first run"
+  ],
+  "input": {
+    "now": "2026-11-06T06:00:00Z",
+    "timezone": "Asia/Beirut",
+    "horizonDays": 1,
+    "settings": {
+      "pomodoro": { "study_min": 50, "break_min": 10, "long_break_min": 25, "long_break_every": 3 },
+      "switch_after_blocks": 2,
+      "wake": "08:20",
+      "hard_stop": "23:00",
+      "review": { "start": "22:00", "end": "22:30" },
+      "lunch": { "start": "13:00", "end": "14:00" },
+      "sunday_off_from": "14:00",
+      "rest_after_exam_min": 50,
+      "exam_defaults": { "duration_min": 120, "travel_before_min": 30, "travel_after_min": 30 }
+    },
+    "fixedEvents": [
+      { "id": "fe-sleep", "label": "Sleep", "kind": "sleep", "weekdays": [1, 2, 3, 4, 5, 6, 7], "start_time": "00:30", "end_time": "08:20", "never_cut": false }
+    ],
+    "oneoffs": [
+      { "id": "oo-am", "label": "Errands", "kind": "blocked", "date": "2026-11-06", "start_time": "08:20", "end_time": "10:00" },
+      { "id": "oo-pm", "label": "Trip", "kind": "trip", "date": "2026-11-06", "start_time": "10:50", "end_time": "23:00" }
+    ],
+    "items": [
+      { "id": "00000000-0000-4000-8000-00000000a202", "course_id": "c-dl", "type": "homework", "title": "DL HW2", "due_at": "2026-11-06T21:00:00Z", "due_confirmed": true, "priority_boost": 0, "status": "active" },
+      { "id": "00000000-0000-4000-8000-00000000a201", "course_id": "c-cloud", "type": "homework", "title": "Cloud HW4", "due_at": "2026-11-06T21:00:00Z", "due_confirmed": true, "priority_boost": 0, "status": "active" }
+    ],
+    "chunks": [
+      { "id": "00000000-0000-4000-8000-00000000c202", "item_id": "00000000-0000-4000-8000-00000000a202", "order": 1, "title": "Q1-Q4", "kind": "problems", "est_min": 50, "est_unit_min": 50, "done_min": 0, "status": "todo" },
+      { "id": "00000000-0000-4000-8000-00000000c201", "item_id": "00000000-0000-4000-8000-00000000a201", "order": 1, "title": "Q1-Q4", "kind": "problems", "est_min": 50, "est_unit_min": 50, "done_min": 0, "status": "todo" }
+    ],
+    "blocks": []
+  },
+  "expected": {
+    "new_study_blocks": 1,
+    "required_blocks": [
+      { "date": "2026-11-06", "start": "10:00", "end": "10:50", "item_id": "00000000-0000-4000-8000-00000000a201", "chunk_ids": ["00000000-0000-4000-8000-00000000c201"], "id": "uuid v5 of (item_id, chunk_id, date, start); stable across runs" }
+    ],
+    "warnings": [
+      { "type": "overload", "item_id": "00000000-0000-4000-8000-00000000a202", "short_min": 50, "due_at": "2026-11-06T21:00:00Z" }
+    ],
+    "why": "pressure equal (1 block / same days), due_at equal, so item.id asc picks ...a201 although it is listed second in the input"
+  }
+}

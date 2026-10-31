@@ -1,0 +1,323 @@
+\documentclass[11pt,a4paper]{article}
+
+% Study Helper App: v1 spec (handoff for build chat)
+% Note: never use em dashes in this document.
+
+\usepackage[margin=2.2cm]{geometry}
+\IfFileExists{lmodern.sty}{\usepackage[T1]{fontenc}\usepackage{lmodern}}{}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\emergencystretch=2em
+
+\definecolor{accent}{HTML}{1F3A5F}
+\titleformat{\section}{\Large\bfseries\color{accent}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\large\bfseries\color{accent}}{\thesubsection}{0.6em}{}
+\setlist{itemsep=2pt,topsep=4pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\code}[1]{\texttt{\small #1}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small Study Helper App: v1 spec}
+\rhead{\small 27 Oct 2026}
+\cfoot{\small \thepage}
+
+\title{\color{accent}\textbf{Study Helper App: v1 spec}\\[4pt]\large Handoff for the build chat}
+\author{Sergio Azizi}
+\date{Tue 27 Oct 2026}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\noindent\fbox{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{%
+\textbf{Summary.} v1 is one Expo (React Native) codebase shipped as an Android APK and a web link with login, on Supabase. It schedules study around fixed life, logs real time, notifies on Android, and keeps Claude in the loop through zip export and CSV import. Build starts after the Fuzzy exam (Wed 28 Oct). Another Claude chat writes the code, Sergio reviews.}}
+
+\subsection*{Rules for the build chat}
+\begin{itemize}
+  \item Never use em dashes anywhere: UI text, code comments, docs, commit messages, replies.
+  \item Reply to Sergio in short caveman style: fragments, little filler, keep key explanations.
+  \item He prefers documents in \LaTeX{} (with a compiled PDF next to the \code{.tex}).
+  \item He still has Cloud (Wed 4 Nov) and Deep Learning (Thu 19 Nov). Batch questions, keep reviews short.
+\end{itemize}
+
+\tableofcontents
+
+%--------------------------------------------------------------------
+\section{Goal}
+
+Replace the current Study Helper tracker (a Claude artifact with a small db, plus local CSV/JSON exports) with a real app.
+
+\begin{itemize}
+  \item All-day study schedule helper. Juggles exams, projects, homework, labs, quizzes and lecture catch-up in the free time around fixed life (classes, gym, Muay Thai, commute, sleep).
+  \item Later: grows into a full life schedule. Events stay generic enough for that, but v1 does not build it.
+  \item Single user now, multi-user ready: per-user data from day 1, no sharing features.
+  \item Claude stays in the loop for deep plan refines: app exports a zip, Claude returns CSV, app imports it. v2: Claude reads/writes the cloud db directly.
+  \item Current tracker stays live until the app passes the migration check (Section~\ref{sec:accept}).
+\end{itemize}
+
+%--------------------------------------------------------------------
+\section{Platform and stack}
+
+\begin{longtable}{L{3cm}L{12.5cm}}
+\toprule
+\textbf{Part} & \textbf{Choice} \\
+\midrule
+\endhead
+App & Expo (React Native) + Expo Router, TypeScript. One codebase for Android + web (react-native-web). \\
+Backend & Supabase: Postgres, Auth, Row Level Security on every table. Edge Functions only in v2. \\
+Auth & Email + password (or magic link). No Google login (user preference). \\
+Web & Static export (\code{expo export -p web}) on Netlify or Cloudflare Pages (free). Gives the link. \\
+Android & EAS build, \code{preview} profile, APK sideload. No Play Store. \\
+State & TanStack Query (server state, persisted cache) + Zustand (UI and timer state). \\
+UI & Builder's pick, suggest NativeWind. Dark + light theme. \\
+Notifications & \code{expo-notifications} local scheduled notifications on Android. Web: none in v1 (in-page sound while tab open only). \\
+Time & Timestamps stored in UTC. Planning and display in user timezone (default Asia/Beirut). \\
+Offline & Android works offline for today's plan, timer and ticking. Writes go to an outbox queue, sync on reconnect, last-write-wins per row by \code{updated\_at}. \\
+\bottomrule
+\end{longtable}
+
+Suggested repo layout: \code{app/} (screens), \code{src/scheduler/} (pure scheduling logic, no React, unit tested), \code{src/io/} (export zip, CSV import, migration), \code{supabase/migrations/}.
+
+%--------------------------------------------------------------------
+\section{Data model}
+
+Every table has \code{id uuid}, \code{user\_id uuid} (RLS: \code{user\_id = auth.uid()}), \code{created\_at}, \code{updated\_at}, \code{archived\_at}. A course holds items, an item holds ordered chunks, and blocks put chunks into time.
+
+\begin{longtable}{L{2.9cm}L{12.6cm}}
+\toprule
+\textbf{Table} & \textbf{Key fields} \\
+\midrule
+\endhead
+\code{courses} & \code{code} (CPEN448), \code{name}, \code{short} (Cloud), \code{color}, \code{professor}, \code{semester}, \code{status} active/archived, \code{notes} \\
+\code{items} & \code{course\_id}, \code{type} exam / project / homework / lab / quiz / catchup, \code{title}, \code{due\_at}, \code{due\_confirmed} (exam slot confirmed vs assumed), \code{scope}, \code{rules} (cheat sheet rules etc.), \code{needs\_laptop}, \code{weight\_pct}, \code{priority\_boost} (default 0), \code{status} \\
+\code{chunks} & \code{item\_id}, \code{order}, \code{title} (L3 p19-33), \code{kind} notes / problems / review / mock / cheat\_sheet / lab\_work / writing / other, \code{source\_ref} (file + pages), \code{est\_blocks}, \code{done\_blocks}, \code{milestone\_due} (project stages), \code{status} todo/partial/done/skipped \\
+\code{fixed\_events} & \code{label}, \code{kind} class / sport / commute / sleep / other, \code{weekdays}, \code{start\_time}, \code{end\_time}, \code{valid\_from}, \code{valid\_to}, \code{never\_cut} (true for gym and Muay Thai), \code{course\_id} (for classes) \\
+\code{oneoff\_blocks} & \code{label}, \code{date}, \code{start\_time}/\code{end\_time} or \code{all\_day}, \code{kind} blocked / off / trip \\
+\code{blocks} & \code{date}, \code{start}, \code{end}, \code{course\_id}, \code{item\_id}, \code{chunk\_ids}, \code{what}, \code{type} Notes / Problems / Review / Mock / CheatSheet / Buffer / Rest / Break / Fixed, \code{source} auto / claude / manual / import, \code{locked}, \code{status} planned / done / partial / skipped / moved, \code{subtasks} \code{[\{name, plan\_min\}]}, \code{legacy\_key} (old keys like \code{1016-1835-Opt}), \code{import\_batch\_id} \\
+\code{time\_logs} & \code{block\_id}, \code{started\_at}, \code{ended\_at}, \code{plan\_min}, \code{actual\_min}, \code{pages}, \code{completed}, \code{focus} 1-5 (optional), \code{note}, \code{subtasks} \code{[\{name, plan, act\}]} \\
+\code{milestones} & \code{date}, \code{title}, \code{parts}, \code{done} (keeps the current daily milestone feature) \\
+\code{active\_timer} & One row per user so web and phone show the same timer: \code{block\_id}, \code{phase} study/break, \code{phase\_started\_at}, \code{phase\_ends\_at}, \code{subtask\_index}, \code{auto} \\
+\code{settings} & One row per user (jsonb is fine): rules below, notification toggles, quiet hours, timezone \\
+\code{import\_batches} & \code{source} claude\_csv / migration / zip, \code{summary}; used for undo \\
+\bottomrule
+\end{longtable}
+
+\subsection*{Default rules (settings)}
+\begin{itemize}
+  \item Pomodoro 50 study / 10 break, long break 20-30 min after every 3 blocks. Blocks can be any length (25, 40, 75 min mocks); 50/10 is only the default.
+  \item Switch subject after 2 blocks of the same course, except exam-eve review days.
+  \item Hard stop 23:00, wake 08:20, daily review block 22:00-22:30.
+  \item First block after each exam = rest. Sunday afternoon/evening partly off.
+  \item Fresh slots (mornings, first block after lunch) go to the highest pressure item.
+  \item Gym and Muay Thai are \code{never\_cut}: necessary breaks.
+\end{itemize}
+
+%--------------------------------------------------------------------
+\section{Screens}
+
+\begin{enumerate}
+  \item \textbf{Login}
+  \item \textbf{Today} (home): timeline of the day, fixed events greyed, study blocks in course colors. Current block highlighted with a big Start button, subtasks list, next up, behind/ahead indicator.
+  \item \textbf{Week}: 7-day view. Tap to edit, drag to move (at least on web), lock toggle.
+  \item \textbf{Courses}: course list, then course page (items by type with due dates and pressure), then item page (ordered chunks with est/done blocks). Add, edit, archive at every level.
+  \item \textbf{Quick add}: homework / lab / quiz in a few taps (course, due, est blocks, needs laptop).
+  \item \textbf{Archive}
+  \item \textbf{Stats}
+  \item \textbf{Import / Export}
+  \item \textbf{Settings}: rules, fixed schedule editor, notifications, theme, account.
+\end{enumerate}
+
+%--------------------------------------------------------------------
+\section{Timer and logging}
+
+Keeps the per-subtask plan vs actual timing the current tracker already has.
+
+\begin{itemize}
+  \item Pomodoro start / pause / stop, auto break after a block, optional auto start of the next block (\code{auto} flag).
+  \item Each subtask has plan minutes; the app records actual minutes and shows the ratio.
+  \item Timer runs from stored timestamps, so it survives app backgrounding. Phase end fires a notification.
+  \item On block end: done / partial (which subtasks or pages) / skipped. Actual time comes from the timer and stays editable. Optional short note and optional focus 1-5.
+  \item Partial or skipped work flows back to the chunk's \code{done\_blocks}, so the scheduler knows what is left.
+\end{itemize}
+
+%--------------------------------------------------------------------
+\section{Scheduler (hybrid)}
+
+The app auto-fills and repairs day to day. Claude does deep refines through CSV. Implement as a pure deterministic function \code{schedule(input) -> \{ blocks, warnings \}} in \code{src/scheduler/}, with unit tests.
+
+\subsection*{Pressure score}
+For each active item:
+\[
+  \text{pressure} = \frac{\text{remaining estimated blocks}}{\max(0.5,\ \text{days until due})} + \text{priority\_boost}
+\]
+Days until due are fractional (to \code{due\_at}). Items with no due date (lecture catch-up) get a low default. Highest pressure gets the most blocks and the freshest slots.
+
+\subsection*{Behaviour}
+\begin{itemize}
+  \item \textbf{Auto-fill}: fills free slots for the next 7 days (configurable), respecting fixed events, one-offs, hard stop, pomodoro lengths, the 2-then-switch rule, rest after exam, Sunday off time and the daily review. Chunks are taken in order. Locked blocks and Claude blocks are never moved unless the user allows it.
+  \item \textbf{Missed blocks}: block ended without a tick triggers a nag, then: done / partial / move to nearest buffer / let auto-fill reschedule. Nearest exam first when picking buffers.
+  \item \textbf{Rebalance} button: recompute, show a diff (added / moved / removed), accept all or pick.
+  \item \textbf{Overload}: if needed blocks exceed free slots before a due date, show a red banner, send a warning, and suggest what to shrink.
+\end{itemize}
+
+%--------------------------------------------------------------------
+\section{Notifications (Android, v1)}
+
+All toggleable in settings, all respecting quiet hours (after hard stop, during classes, gym, Muay Thai).
+\begin{itemize}
+  \item Block start, block end, break end.
+  \item Morning summary at wake time: today's blocks + top pressure item.
+  \item Deadline warnings 7 / 3 / 1 days before each due date (configurable), plus overload warning.
+  \item Nag 10 min after a block ends with no tick.
+\end{itemize}
+Local notifications are rescheduled for the next 48 h whenever the plan changes or the app opens.
+
+%--------------------------------------------------------------------
+\section{Archive and stats}
+
+\textbf{Archive}
+\begin{itemize}
+  \item Done blocks and done items per course, searchable, filtered by course / date / type, with notes and time logs.
+  \item Finished courses and old semesters: archiving a course moves it and all its items out of active views.
+  \item Restore anything back to active.
+\end{itemize}
+
+\textbf{Stats}
+\begin{itemize}
+  \item Hours per course per week.
+  \item Estimate vs actual ratio per course and per block type (like the current Ratio column).
+  \item Planned vs done, streaks, focus trend.
+\end{itemize}
+
+%--------------------------------------------------------------------
+\section{Claude loop: export zip and CSV import}
+
+\subsection{Export zip}
+File name \code{study-helper-export\_YYYY-MM-DD\_HHMM.zip}. Range: all / last 7 days / since last export. Android share sheet or web download.
+\begin{itemize}
+  \item \code{manifest.json}: schema version, exported\_at, timezone, range, counts.
+  \item \code{README.md}: short guide for Claude: what each file is, the import format below, the rules (no em dashes, keep gym/Muay Thai, 2-then-switch, hard stop).
+  \item \code{courses.csv}, \code{items.csv}, \code{chunks.csv}, \code{blocks.csv}, \code{time\_logs.csv}, \code{time\_log\_subtasks.csv}, \code{fixed\_events.csv}, \code{oneoff\_blocks.csv}, \code{milestones.csv}, \code{settings.json}.
+  \item \code{pressure.csv}: current pressure score per item, so Claude sees what the app sees.
+  \item \code{snapshot.json}: everything in one file.
+\end{itemize}
+
+\subsection{CSV import (what Claude sends back)}
+\code{blocks\_import.csv}:
+
+\begin{longtable}{L{3cm}L{12.5cm}}
+\toprule
+\textbf{Column} & \textbf{Notes} \\
+\midrule
+\endhead
+\code{op} & add / update / delete \\
+\code{id} & blank for add, block uuid for update/delete \\
+\code{legacy\_key} & optional, matches old tracker keys \\
+\code{date} & YYYY-MM-DD \\
+\code{start}, \code{end} & HH:MM \\
+\code{course} & course short (Opt, PM, Fuzzy, Cloud, DL) \\
+\code{item} & item title or id \\
+\code{chunks} & chunk titles separated by \code{;} (optional) \\
+\code{what} & block text \\
+\code{type} & Notes / Problems / Review / Mock / CheatSheet / Buffer / Rest / Break \\
+\code{subtasks} & \code{name|min; name|min} \\
+\code{locked} & true/false, default true for Claude blocks \\
+\bottomrule
+\end{longtable}
+
+Also \code{chunks\_import.csv} (\code{op, id, course, item, order, title, kind, source\_ref, est\_blocks, milestone\_due}) and \code{items\_import.csv} (\code{op, id, course, type, title, due\_at, due\_confirmed, scope, needs\_laptop}).
+
+\textbf{Flow}: pick files, validate (row-level errors), diff preview, apply all or pick rows, saved as an import batch, \textbf{Undo last import} button.
+
+%--------------------------------------------------------------------
+\section{Migration from the current tracker}
+
+Inputs live in \code{D:\textbackslash Uni\textbackslash 5th year\textbackslash Fall Semester\textbackslash Tracker}. They are stale (snapshot 20 Oct, blocks CSV 25 Oct). Before migrating, Sergio asks Claude to dump the live tracker db into a fresh \code{Tracker snapshot.json} in the same format. The importer must take that format.
+
+\begin{longtable}{L{4.2cm}L{6.3cm}L{4.7cm}}
+\toprule
+\textbf{Source} & \textbf{Shape} & \textbf{Maps to} \\
+\midrule
+\endhead
+\code{meta/plan.\allowbreak data.rows[]} & \code{k} key, \code{w} week, \code{d} date, \code{s} start, \code{e} end, \code{sub} subject, \code{t} what, \code{ty} type & blocks (\code{legacy\_key = k}); Fixed rows become fixed events or one-offs; Break/Rest become break blocks \\
+\code{progress/state.\allowbreak data.blocks} & \code{\{k: true\}} & block status done \\
+\code{plans/<k>.data.subs[]} & \code{\{n, m\}} & block subtasks (name, plan\_min) \\
+\code{timelog/<k>.data} & \code{plan, act, pages, completed, startedAt, endedAt, subs[\{n, plan, act\}]} & time\_logs \\
+\code{Tracker\_Blocks.csv} & Week, Day, Start, End, Subject, What, Type, Done & blocks (fallback) \\
+\code{Time\_Log\_*.csv} & Block, Subject, Type, Started, Ended, Plan\_min, Actual\_min, Ratio, Pages, Completed, Subtask, Sub\_plan, Sub\_actual, Sub\_ratio (subtask rows follow their block row) & time\_logs (fallback) \\
+\bottomrule
+\end{longtable}
+
+Courses are created from subject shorts (Opt, PM, Fuzzy, Cloud, DL); codes filled in later. \code{timer/active} is ignored.
+
+%--------------------------------------------------------------------
+\section{Seed data (Fall 2026)}
+
+\begin{itemize}
+  \item \textbf{Courses}: Optimization Theory ELEN401 (Opt), Project Management GENG402 (PM), Fuzzy Logic Control ELEN527 (Fuzzy), Cloud Computing and Big Data CPEN448 (Cloud), Deep Learning CPEN426 (DL). Graduation Project GENG490 too. Seminar is class only.
+  \item \textbf{Exams}: Opt Thu 22 Oct (done), PM Mon 26 Oct (done), Fuzzy Wed 28 Oct 9:30, Cloud Wed 4 Nov 11:00 (assumed slot), DL Thu 19 Nov (comprehensive).
+  \item \textbf{Classes}: Mon/Wed 9:30-14:00, Tue 9:30-12:30, Thu 9:30-14:00. None Fri to Sun. Wake 8:20, leave 8:50, commute 30 min each way.
+  \item \textbf{Sport}: Muay Thai Mon/Wed/Fri 19:00-20:30, blocked 18:40-21:20 with travel and shower. Gym Tue 13:00-14:30, Sat 12:30 (about 1.5 h incl.\ shower), maybe Thu. Both never cut.
+  \item \textbf{Study method}: 50/10 Pomodoro, one task per block, examples first then theory, handwritten notes, switch subject every 2 blocks, rest block after each exam, hard stop 23:00.
+\end{itemize}
+
+%--------------------------------------------------------------------
+\section{Out of scope for v1 (v2 list)}
+
+\begin{itemize}
+  \item Web push notifications (Supabase cron + Web Push).
+  \item Claude direct access to the cloud db (small MCP server or scoped API over Supabase).
+  \item Calendar: no Google. v2 option is a read-only \code{.ics} feed any calendar app can subscribe to.
+  \item Full life schedule (non-study tasks, habits, chores).
+  \item Course material uploads (slides/PDFs per course for Claude context).
+  \item Sharing and multi-user onboarding. iOS.
+\end{itemize}
+
+%--------------------------------------------------------------------
+\section{Build order}
+
+M3 is the switch-over point: once the Claude loop works end to end, the old tracker can retire.
+
+\begin{longtable}{L{1cm}L{8.3cm}L{5.9cm}}
+\toprule
+\textbf{\#} & \textbf{Milestone} & \textbf{Done when} \\
+\midrule
+\endhead
+M0 & Expo + TS + Router, Supabase schema + RLS, auth, web deploy link, first APK & Login works on phone and web \\
+M1 & Courses / items / chunks CRUD, fixed events, one-offs, settings & Cloud + DL entered with chunks \\
+M2 & Today + Week views, manual blocks, tick + log, timer with subtasks, shared active timer & Daily use matches the current tracker \\
+M3 & Migration importer, export zip, CSV import with diff + undo & Claude loop works end to end (\textbf{switch-over}) \\
+M4 & Scheduler (pure fn + tests), auto-fill, rebalance diff, missed-block flow, overload warning & Auto week plan passes tests \\
+M5 & Android notifications & All 4 types fire with app closed \\
+M6 & Archive + stats & Archive, restore and stats screens work \\
+M7 & Offline outbox, polish & A full day in airplane mode works \\
+\bottomrule
+\end{longtable}
+
+%--------------------------------------------------------------------
+\section{Acceptance checks}\label{sec:accept}
+
+\begin{itemize}[label=$\square$]
+  \item Migration: imported plan matches the tracker for 25 and 26 Oct; ticked count and subtasks match the fresh snapshot.
+  \item Export then re-import gives identical data (round trip).
+  \item Scheduler: no overlap with fixed events or one-offs, nothing after 23:00, gym/Muay Thai never cut, 2-then-switch kept except exam eve, rest after each exam, locked and Claude blocks untouched, deterministic output.
+  \item Notifications fire on Android with the app closed and phone locked.
+  \item RLS: a second test user cannot read the first user's rows.
+  \item Lint/grep check fails the build if any source or UI string contains an em dash.
+\end{itemize}
+
+\end{document}

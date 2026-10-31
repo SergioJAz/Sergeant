@@ -1,0 +1,4 @@
+op,ref,id,legacy_key,date,start,end,course,item,chunks,what,type,subtasks,locked
+add,new-1,,,2026-11-05,15:50,15:00,Cloud,Cloud midterm,,End before start,Notes,,true
+add,new-2,,,2026-11-05,15:00,15:00,Cloud,Cloud midterm,,Zero length,Notes,,true
+add,new-3,,,2026-11-05,23:30,00:20,Cloud,Cloud midterm,,Crosses midnight,Notes,,true

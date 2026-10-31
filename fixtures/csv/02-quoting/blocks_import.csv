@@ -1,0 +1,4 @@
+op,ref,id,legacy_key,date,start,end,course,item,chunks,what,type,subtasks,locked
+add,new-1,,,2026-11-05,16:00,16:50,Cloud,Cloud midterm,"Setup\; VMs","Setup, VMs; ""prod"" | test",Notes,"Read ""Hadoop, the guide""|25; Pipes \| filters|25",true
+add,new-2,,,2026-11-05,17:00,17:50,Cloud,Cloud midterm,"MapReduce notes;HDFS problems","Line one
+Line two",Review,"Recap|50",false

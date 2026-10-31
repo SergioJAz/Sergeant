@@ -1,0 +1,22 @@
+{
+  "case": "dependent adds across files via ref / @new-N",
+  "covers": ["Contracts 7 ref column and @new-N", "Contracts 7 est_blocks < 0 rejected", "Contracts 3 est_min = est_blocks * 50", "AC07 (selecting a row auto-selects its dependencies; dependency integrity)"],
+  "base_state": "../base-state.json",
+  "files": ["items_import.csv", "chunks_import.csv"],
+  "notes": "Both files form one batch. ref values are unique across all files of a batch. A row that depends on a rejected row is rejected too.",
+  "rows": [
+    { "file": "items_import.csv", "row": 1, "ref": "new-1", "op": "add", "status": "valid", "resolved": { "course_id": "00000000-0000-4000-8000-000000000001", "type": "homework", "due_at": "2026-11-10T20:00:00Z", "scope": "Spark RDD, DataFrames" } },
+    { "file": "items_import.csv", "row": 2, "ref": "new-2", "op": "add", "status": "rejected", "errors": [ { "code": "bad_enum", "field": "type", "value": "essay", "allowed": ["exam", "project", "homework", "lab", "quiz", "catchup"] } ] },
+    { "file": "chunks_import.csv", "row": 1, "ref": "new-3", "op": "add", "status": "valid", "depends_on": ["new-1"], "resolved": { "item": "@new-1", "est_blocks": 1, "est_min": 50, "est_unit_min": 50 } },
+    { "file": "chunks_import.csv", "row": 2, "ref": "new-4", "op": "add", "status": "valid", "depends_on": ["new-1"], "resolved": { "item": "@new-1", "est_blocks": 2, "est_min": 100, "est_unit_min": 50, "milestone_due": "2026-11-08" } },
+    { "file": "chunks_import.csv", "row": 3, "ref": "new-5", "op": "add", "status": "rejected", "depends_on": ["new-2"], "errors": [ { "code": "depends_on_rejected", "ref": "new-2" } ] },
+    { "file": "chunks_import.csv", "row": 4, "ref": "new-6", "op": "add", "status": "rejected", "errors": [ { "code": "unknown", "field": "item", "value": "@new-9" } ] },
+    { "file": "chunks_import.csv", "row": 5, "ref": "new-7", "op": "add", "status": "rejected", "errors": [ { "code": "negative_est", "field": "est_blocks", "value": "-1" } ] }
+  ],
+  "selection_checks": [
+    { "select": ["chunks_import.csv#2"], "auto_selected": ["items_import.csv#1"], "apply_result": "1 item and 1 chunk created" },
+    { "select": ["items_import.csv#1"], "auto_selected": [], "apply_result": "1 item created, no chunks" },
+    { "select_all_then_deselect": ["items_import.csv#1"], "auto_deselected": ["chunks_import.csv#1", "chunks_import.csv#2"] }
+  ],
+  "summary": { "adds": 3, "updates": 0, "deletes": 0, "rejected": 4, "protected": 0 }
+}

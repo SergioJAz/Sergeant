@@ -1,0 +1,4 @@
+.base/
+.base-ast/
+.base-ast-cache/
+.claude/

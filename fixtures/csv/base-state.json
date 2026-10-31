@@ -1,0 +1,30 @@
+{
+  "note": "Database state each csv case is applied to. Every case starts from this state, not from the result of an earlier case. Ids are readable uuid v4 values.",
+  "timezone": "Asia/Beirut",
+  "courses": [
+    { "id": "00000000-0000-4000-8000-000000000001", "short": "Cloud", "code": "CPEN448", "status": "active" },
+    { "id": "00000000-0000-4000-8000-000000000002", "short": "DL", "code": "CPEN426", "status": "active" },
+    { "id": "00000000-0000-4000-8000-000000000003", "short": "Fuzzy", "code": "ELEN527", "status": "archived", "archived_at": "2026-10-29T10:00:00Z" }
+  ],
+  "items": [
+    { "id": "00000000-0000-4000-8000-000000000101", "course_id": "00000000-0000-4000-8000-000000000001", "type": "exam", "title": "Cloud midterm", "due_at": "2026-11-04T09:00:00Z", "due_confirmed": false, "status": "active" },
+    { "id": "00000000-0000-4000-8000-000000000102", "course_id": "00000000-0000-4000-8000-000000000001", "type": "lab", "title": "Lab report", "due_at": "2026-11-02T20:00:00Z", "due_confirmed": true, "status": "active" },
+    { "id": "00000000-0000-4000-8000-000000000103", "course_id": "00000000-0000-4000-8000-000000000001", "type": "lab", "title": "Lab report", "due_at": "2026-11-09T20:00:00Z", "due_confirmed": true, "status": "active" },
+    { "id": "00000000-0000-4000-8000-000000000104", "course_id": "00000000-0000-4000-8000-000000000002", "type": "exam", "title": "DL final", "due_at": "2026-11-19T07:30:00Z", "due_confirmed": false, "status": "active" },
+    { "id": "00000000-0000-4000-8000-000000000105", "course_id": "00000000-0000-4000-8000-000000000003", "type": "exam", "title": "Fuzzy final", "due_at": "2026-10-28T07:30:00Z", "due_confirmed": true, "status": "archived", "archived_at": "2026-10-29T10:00:00Z" }
+  ],
+  "chunks": [
+    { "id": "00000000-0000-4000-8000-000000000201", "item_id": "00000000-0000-4000-8000-000000000101", "order": 1, "title": "MapReduce notes", "kind": "notes", "est_blocks": 2, "est_min": 100, "est_unit_min": 50, "status": "todo" },
+    { "id": "00000000-0000-4000-8000-000000000202", "item_id": "00000000-0000-4000-8000-000000000101", "order": 2, "title": "HDFS problems", "kind": "problems", "est_blocks": 2, "est_min": 100, "est_unit_min": 50, "status": "todo" },
+    { "id": "00000000-0000-4000-8000-000000000204", "item_id": "00000000-0000-4000-8000-000000000101", "order": 3, "title": "Setup; VMs", "kind": "other", "est_blocks": 1, "est_min": 50, "est_unit_min": 50, "status": "todo" },
+    { "id": "00000000-0000-4000-8000-000000000203", "item_id": "00000000-0000-4000-8000-000000000104", "order": 1, "title": "CNN notes", "kind": "notes", "est_blocks": 3, "est_min": 150, "est_unit_min": 50, "status": "todo" }
+  ],
+  "blocks": [
+    { "id": "00000000-0000-4000-8000-000000000301", "date": "2026-11-02", "start": "15:00", "end": "15:50", "course_id": "00000000-0000-4000-8000-000000000001", "item_id": "00000000-0000-4000-8000-000000000101", "chunk_ids": ["00000000-0000-4000-8000-000000000201"], "what": "MapReduce notes", "type": "Notes", "source": "auto", "locked": false, "status": "planned", "legacy_key": null, "rev": 1 },
+    { "id": "00000000-0000-4000-8000-000000000302", "date": "2026-11-02", "start": "16:00", "end": "16:50", "course_id": "00000000-0000-4000-8000-000000000002", "item_id": "00000000-0000-4000-8000-000000000104", "chunk_ids": ["00000000-0000-4000-8000-000000000203"], "what": "CNN notes", "type": "Notes", "source": "claude", "locked": true, "status": "planned", "legacy_key": null, "rev": 1 },
+    { "id": "00000000-0000-4000-8000-000000000303", "date": "2026-11-03", "start": "10:00", "end": "10:50", "course_id": "00000000-0000-4000-8000-000000000001", "item_id": "00000000-0000-4000-8000-000000000101", "chunk_ids": ["00000000-0000-4000-8000-000000000202"], "what": "HDFS problems", "type": "Problems", "source": "manual", "locked": true, "status": "planned", "legacy_key": null, "rev": 1 },
+    { "id": "00000000-0000-4000-8000-000000000304", "date": "2026-11-03", "start": "15:00", "end": "15:50", "course_id": "00000000-0000-4000-8000-000000000001", "item_id": "00000000-0000-4000-8000-000000000101", "chunk_ids": ["00000000-0000-4000-8000-000000000201"], "what": "MapReduce notes", "type": "Notes", "source": "import", "locked": false, "status": "planned", "legacy_key": "1103-1500-Cloud", "rev": 1 },
+    { "id": "00000000-0000-4000-8000-000000000305", "date": "2026-11-03", "start": "16:00", "end": "16:50", "course_id": "00000000-0000-4000-8000-000000000002", "item_id": "00000000-0000-4000-8000-000000000104", "chunk_ids": ["00000000-0000-4000-8000-000000000203"], "what": "CNN notes", "type": "Notes", "source": "auto", "locked": false, "status": "planned", "legacy_key": null, "rev": 1 }
+  ],
+  "time_logs": []
+}

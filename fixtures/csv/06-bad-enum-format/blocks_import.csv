@@ -1,0 +1,7 @@
+op,ref,id,legacy_key,date,start,end,course,item,chunks,what,type,subtasks,locked
+add,new-1,,,2026-11-05,15:00,15:50,Cloud,Cloud midterm,,Bad type,Lecture,,true
+upsert,new-2,,,2026-11-05,16:00,16:50,Cloud,Cloud midterm,,Unknown op,Notes,,true
+add,new-3,,,2026/11/05,17:00,17:50,Cloud,Cloud midterm,,Bad date format,Notes,,true
+add,new-4,,,2026-11-31,17:00,17:50,Cloud,Cloud midterm,,Impossible date,Notes,,true
+add,new-5,,,2026-11-05,9:00,9:50,Cloud,Cloud midterm,,Bad time format,Notes,,true
+add,new-6,,,2026-11-05,18:00,18:50,Cloud,Cloud midterm,,Bad boolean,Notes,,yes

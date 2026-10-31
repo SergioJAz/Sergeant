@@ -1,0 +1,7 @@
+op,ref,id,legacy_key,date,start,end,course,item,chunks,what,type,subtasks,locked
+update,,00000000-0000-4000-8000-000000000399,,2026-11-05,15:00,15:50,Cloud,Cloud midterm,,Ghost block,Notes,,false
+add,new-1,,,2026-11-05,15:00,15:50,Cloud,Lab reprot,,Typo item,Notes,,true
+add,new-2,,,2026-11-05,16:00,16:50,Bio,Cloud midterm,,Unknown course,Notes,,true
+add,new-3,,,2026-11-05,17:00,17:50,Fuzzy,Fuzzy final,,Archived parent,Review,,true
+delete,,,9999-0000-Cloud,,,,,,,,,,
+add,new-4,,,2026-11-05,18:00,18:50,Cloud,Cloud midterm,Spark notes,Unknown chunk,Notes,,true

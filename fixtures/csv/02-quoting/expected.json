@@ -1,0 +1,24 @@
+{
+  "case": "RFC 4180 quoting and list escaping",
+  "covers": ["Contracts 7 quoting (comma, quote, ; and | in fields, multiline inside quotes)", "Contracts 7 list escaping (backslash-; and backslash-| inside names)"],
+  "base_state": "../base-state.json",
+  "files": ["blocks_import.csv"],
+  "csv_records": 2,
+  "notes": "The file has 3 physical lines after the header but 2 records, because record 2 has a newline inside a quoted field. Whitespace around list separators is trimmed. Escapes apply only in list fields (chunks, subtasks); the what field is plain text, so its ; and | stay literal.",
+  "rows": [
+    { "row": 1, "op": "add", "status": "valid", "resolved": {
+      "chunk_ids": ["00000000-0000-4000-8000-000000000204"],
+      "chunk_titles": ["Setup; VMs"],
+      "what": "Setup, VMs; \"prod\" | test",
+      "subtasks": [ { "name": "Read \"Hadoop, the guide\"", "plan_min": 25 }, { "name": "Pipes | filters", "plan_min": 25 } ]
+    } },
+    { "row": 2, "op": "add", "status": "valid", "resolved": {
+      "chunk_ids": ["00000000-0000-4000-8000-000000000201", "00000000-0000-4000-8000-000000000202"],
+      "what": "Line one\nLine two",
+      "type": "Review",
+      "locked": false,
+      "subtasks": [ { "name": "Recap", "plan_min": 50 } ]
+    } }
+  ],
+  "summary": { "adds": 2, "updates": 0, "deletes": 0, "rejected": 0, "protected": 0 }
+}

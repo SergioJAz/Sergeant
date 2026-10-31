@@ -1,0 +1,16 @@
+{
+  "case": "rows touching locked or source=claude blocks",
+  "covers": ["Contracts 7 protected rows need per-row unlock in preview", "Contracts 9 level 1 protected records"],
+  "base_state": "../base-state.json",
+  "files": ["blocks_import.csv"],
+  "rows": [
+    { "row": 1, "op": "update", "status": "protected", "resolved": { "block_id": "00000000-0000-4000-8000-000000000302" }, "reasons": ["locked", "source claude"] },
+    { "row": 2, "op": "delete", "status": "protected", "resolved": { "block_id": "00000000-0000-4000-8000-000000000303" }, "reasons": ["locked"] },
+    { "row": 3, "op": "update", "status": "valid", "resolved": { "block_id": "00000000-0000-4000-8000-000000000301" } }
+  ],
+  "apply_checks": [
+    { "selection": "apply all, no unlocks", "changed": ["00000000-0000-4000-8000-000000000301"], "unchanged": ["00000000-0000-4000-8000-000000000302", "00000000-0000-4000-8000-000000000303"] },
+    { "selection": "apply all, unlock row 1 only", "changed": ["00000000-0000-4000-8000-000000000301", "00000000-0000-4000-8000-000000000302"], "unchanged": ["00000000-0000-4000-8000-000000000303"] }
+  ],
+  "summary": { "adds": 0, "updates": 1, "deletes": 0, "rejected": 0, "protected": 2 }
+}

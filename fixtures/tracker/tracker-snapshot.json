@@ -1,0 +1,74 @@
+{
+  "schema": 1,
+  "exportedAt": "2026-10-20T19:05:00.000Z",
+  "state": {
+    "documents": {
+      "meta/plan": {
+        "data": {
+          "rows": [
+            { "k": "1019-0930-Fixed", "w": "Week 8", "d": "2026-10-19", "s": "09:30", "e": "14:00", "sub": "Fixed", "t": "Classes", "ty": "Fixed" },
+            { "k": "1019-1430-Opt", "w": "Week 8", "d": "2026-10-19", "s": "14:30", "e": "15:20", "sub": "Opt", "t": "L5 Simplex problems", "ty": "Problems" },
+            { "k": "1019-1520-Break", "w": "Week 8", "d": "2026-10-19", "s": "15:20", "e": "15:30", "sub": "Break", "t": "Break", "ty": "Break" },
+            { "k": "1019-1530-Opt", "w": "Week 8", "d": "2026-10-19", "s": "15:30", "e": "16:20", "sub": "Opt", "t": "L6 duality notes", "ty": "Notes" },
+            { "k": "1019-1630-PM", "w": "Week 8", "d": "2026-10-19", "s": "16:30", "e": "17:20", "sub": "PM", "t": "Risk register notes", "ty": "Notes" },
+            { "k": "1019-1840-Fixed", "w": "Week 8", "d": "2026-10-19", "s": "18:40", "e": "21:20", "sub": "Fixed", "t": "Muay Thai", "ty": "Fixed" },
+            { "k": "1019-2200-Opt", "w": "Week 8", "d": "2026-10-19", "s": "22:00", "e": "22:30", "sub": "Opt", "t": "Daily review", "ty": "Review" },
+            { "k": "1020-1430-Fuzzy", "w": "Week 8", "d": "2026-10-20", "s": "14:40", "e": "15:30", "sub": "Fuzzy", "t": "Membership functions problems", "ty": "Problems" },
+            { "k": "1020-1540-Cloud", "w": "Week 8", "d": "2026-10-20", "s": "15:40", "e": "16:30", "sub": "Cloud", "t": "MapReduce notes", "ty": "Notes" },
+            { "k": "1020-1640-Rest", "w": "Week 8", "d": "2026-10-20", "s": "16:40", "e": "17:00", "sub": "Rest", "t": "Rest", "ty": "Rest" },
+            { "k": "1020-2230-DL", "w": "Week 8", "d": "2026-10-20", "s": "22:30", "e": "23:20", "sub": "DL", "t": "CNN backprop notes", "ty": "Notes" },
+            { "k": "1022-0930-Fixed", "w": "Week 8", "d": "2026-10-22", "s": "09:30", "e": "11:30", "sub": "Fixed", "t": "Opt exam", "ty": "Fixed" },
+            { "k": "1022-1200-Rest", "w": "Week 8", "d": "2026-10-22", "s": "12:00", "e": "12:50", "sub": "Rest", "t": "Rest after Opt exam", "ty": "Rest" },
+            { "k": "1022-1400-PM", "w": "Week 8", "d": "2026-10-22", "s": "14:00", "e": "14:50", "sub": "PM", "t": "Stakeholder analysis problems", "ty": "Problems" },
+            { "k": "1022-2330-DL", "w": "Week 8", "d": "2026-10-22", "s": "23:30", "e": "00:20", "sub": "DL", "t": "Transformers reading", "ty": "Notes" }
+          ]
+        }
+      },
+      "progress/state": {
+        "data": {
+          "blocks": {
+            "1019-1430-Opt": true,
+            "1019-1530-Opt": true,
+            "1019-2200-Opt": true,
+            "1020-1430-Fuzzy": true,
+            "1018-1500-Opt": true
+          }
+        }
+      },
+      "plans/1019-1430-Opt": {
+        "data": { "subs": [ { "n": "Examples L5", "m": 20 }, { "n": "Problems 1-6", "m": 30 } ] }
+      },
+      "plans/1019-1630-PM": {
+        "data": { "subs": [ { "n": "Read ch 11", "m": 25 }, { "n": "Summary", "m": 25 } ] }
+      },
+      "plans/1020-1430-Fuzzy": {
+        "data": { "subs": [ { "n": "Examples", "m": 20 }, { "n": "HW2 q1-3", "m": 30 } ] }
+      },
+      "timelog/1019-1430-Opt": {
+        "data": {
+          "plan": 50,
+          "act": 62,
+          "pages": 4,
+          "completed": true,
+          "startedAt": "2026-10-19T11:31:00.000Z",
+          "endedAt": "2026-10-19T12:33:00.000Z",
+          "subs": [ { "n": "Examples L5", "plan": 20, "act": 24 }, { "n": "Problems 1-6", "plan": 30, "act": 38 } ]
+        }
+      },
+      "timelog/1020-1430-Fuzzy": {
+        "data": {
+          "plan": 50,
+          "act": 45,
+          "pages": 3,
+          "completed": true,
+          "startedAt": "2026-10-20T11:41:00.000Z",
+          "endedAt": "2026-10-20T12:26:00.000Z",
+          "subs": [ { "n": "Examples", "plan": 20, "act": 18 }, { "n": "HW2 q1-3", "plan": 30, "act": 27 } ]
+        }
+      },
+      "timer/active": {
+        "data": { "k": "1020-1540-Cloud", "phase": "study", "startedAt": "2026-10-20T12:40:00.000Z", "endsAt": "2026-10-20T13:30:00.000Z", "sub": 0, "auto": false }
+      }
+    }
+  }
+}

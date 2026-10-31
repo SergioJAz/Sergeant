@@ -1,0 +1,3 @@
+op,ref,id,course,type,title,due_at,due_confirmed,scope,needs_laptop
+add,new-1,,Cloud,homework,HW4 Spark,2026-11-10T20:00:00Z,true,"Spark RDD, DataFrames",true
+add,new-2,,DL,essay,Reading summary,2026-11-12T20:00:00Z,true,,false

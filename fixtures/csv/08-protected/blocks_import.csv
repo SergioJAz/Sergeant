@@ -1,0 +1,4 @@
+op,ref,id,legacy_key,date,start,end,course,item,chunks,what,type,subtasks,locked
+update,,00000000-0000-4000-8000-000000000302,,2026-11-02,17:00,17:50,DL,DL final,CNN notes,CNN notes,Notes,,true
+delete,,00000000-0000-4000-8000-000000000303,,,,,,,,,,,
+update,,00000000-0000-4000-8000-000000000301,,2026-11-02,15:00,15:50,Cloud,Cloud midterm,MapReduce notes,MapReduce notes (edited),Notes,,false

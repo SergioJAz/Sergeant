@@ -1,0 +1,16 @@
+{
+  "case": "valid adds, updates (by id and by legacy_key) and a delete",
+  "covers": ["Contracts 7 identity (id wins, legacy_key fallback, name lookup with one match)", "Contracts 5 block hard delete", "AC07"],
+  "base_state": "../base-state.json",
+  "files": ["blocks_import.csv"],
+  "row_numbering": "row = 1-based CSV record index after the header (a multiline record counts once)",
+  "rows": [
+    { "row": 1, "op": "add", "status": "valid", "resolved": { "course_id": "00000000-0000-4000-8000-000000000001", "item_id": "00000000-0000-4000-8000-000000000101", "chunk_ids": ["00000000-0000-4000-8000-000000000202"], "locked": true, "source": "claude", "subtasks": [ { "name": "Examples", "plan_min": 20 }, { "name": "Problems", "plan_min": 30 } ] } },
+    { "row": 2, "op": "add", "status": "valid", "resolved": { "course_id": "00000000-0000-4000-8000-000000000002", "item_id": "00000000-0000-4000-8000-000000000104", "chunk_ids": ["00000000-0000-4000-8000-000000000203"], "locked": true, "subtasks": [] } },
+    { "row": 3, "op": "update", "status": "valid", "resolved": { "block_id": "00000000-0000-4000-8000-000000000301", "matched_by": "id", "start": "15:10", "end": "16:00" } },
+    { "row": 4, "op": "update", "status": "valid", "resolved": { "block_id": "00000000-0000-4000-8000-000000000304", "matched_by": "legacy_key", "start": "17:00", "end": "17:50" } },
+    { "row": 5, "op": "delete", "status": "valid", "resolved": { "block_id": "00000000-0000-4000-8000-000000000305", "matched_by": "id", "delete_mode": "hard (status planned, no time logs)" } }
+  ],
+  "summary": { "adds": 2, "updates": 2, "deletes": 1, "rejected": 0, "protected": 0 },
+  "after_apply": { "blocks_total": 6, "undo_before_images": 3 }
+}
