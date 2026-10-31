@@ -1,21 +1,36 @@
 import { useState } from 'react';
-import { ActivityIndicator, Button, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Text, TextInput, View } from 'react-native';
 
 import { useAuth } from '@/lib/auth';
-
-const inputStyle = { borderWidth: 1, borderColor: '#999', borderRadius: 6, padding: 10 } as const;
+import { Btn, useTheme } from '@/lib/ui';
 
 export default function SignInScreen() {
   const { signIn, signUp } = useAuth();
+  const t = useTheme();
+  const inputStyle = { borderWidth: 1.5, borderColor: t.border, borderRadius: 8, padding: 12, fontSize: 16, color: t.text, backgroundColor: t.field } as const;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function submit(action: 'signIn' | 'signUp') {
+  function switchMode() {
+    setCreating(!creating);
+    setError(null);
+    setMessage(null);
+    setConfirm('');
+  }
+
+  async function submit() {
+    const action = creating ? 'signUp' : 'signIn';
     if (!email.trim() || !password) {
       setError('Enter your email and password.');
+      return;
+    }
+    if (creating && password !== confirm) {
+      setError('Passwords do not match.');
       return;
     }
     setBusy(true);
@@ -29,13 +44,16 @@ export default function SignInScreen() {
   }
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 12 }}>
-      <Text accessibilityRole="header" style={{ fontSize: 24 }}>
-        Sign in
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16, backgroundColor: t.bg }}>
+    <View style={{ width: '100%', maxWidth: 400, padding: 28, gap: 12, borderRadius: 16, borderWidth: 1, borderColor: t.line, backgroundColor: t.surface, boxShadow: '0 8px 32px rgba(0,0,0,0.35)' }}>
+      <Text accessibilityRole="header" style={{ fontSize: 28, fontWeight: '700', color: t.text }}>
+        Sergeant
       </Text>
+      <Text style={{ color: t.muted, marginBottom: 4 }}>{creating ? 'Create your account' : 'Sign in to continue'}</Text>
       <TextInput
         accessibilityLabel="Email"
         placeholder="Email"
+        placeholderTextColor={t.muted}
         autoCapitalize="none"
         autoComplete="email"
         keyboardType="email-address"
@@ -47,23 +65,39 @@ export default function SignInScreen() {
       <TextInput
         accessibilityLabel="Password"
         placeholder="Password"
+        placeholderTextColor={t.muted}
         autoCapitalize="none"
-        autoComplete="password"
+        autoComplete={creating ? 'new-password' : 'password'}
         secureTextEntry
         value={password}
         onChangeText={setPassword}
         editable={!busy}
         style={inputStyle}
       />
+      {creating ? (
+        <TextInput
+          accessibilityLabel="Confirm password"
+          placeholder="Confirm password"
+          placeholderTextColor={t.muted}
+          autoCapitalize="none"
+          autoComplete="new-password"
+          secureTextEntry
+          value={confirm}
+          onChangeText={setConfirm}
+          editable={!busy}
+          style={inputStyle}
+        />
+      ) : null}
       {error ? (
-        <Text accessibilityRole="alert" style={{ color: '#c00' }}>
+        <Text accessibilityRole="alert" style={{ color: t.danger, fontWeight: '600' }}>
           {error}
         </Text>
       ) : null}
-      {message ? <Text accessibilityLiveRegion="polite">{message}</Text> : null}
-      {busy ? <ActivityIndicator accessibilityLabel="Loading" /> : null}
-      <Button title="Sign in" onPress={() => submit('signIn')} disabled={busy} />
-      <Button title="Create account" onPress={() => submit('signUp')} disabled={busy} />
+      {message ? <Text accessibilityLiveRegion="polite" style={{ color: t.text }}>{message}</Text> : null}
+      {busy ? <ActivityIndicator accessibilityLabel="Loading" color={t.primary} /> : null}
+      <Btn title={creating ? 'Create account' : 'Sign in'} onPress={submit} disabled={busy} />
+      <Btn secondary title={creating ? 'Back to sign in' : 'Create account'} onPress={switchMode} disabled={busy} />
+    </View>
     </View>
   );
 }
