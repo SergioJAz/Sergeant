@@ -10,7 +10,7 @@ import { requestPermission, useNotifyState } from '@/lib/notify';
 import { useStore, type WriteInput } from '@/lib/store';
 import { WEEKDAYS } from '@/lib/time';
 import type { Conflict, FixedEvent, Oneoff } from '@/lib/types';
-import { Banner, Btn, Card, Chips, Field, H, Row, Screen, SmallBtn, T, Toggle, useTheme } from '@/lib/ui';
+import { Banner, Btn, Card, Chips, Field, H, Row, Screen, SmallBtn, T, Toggle, useTheme, useThemePref, type ThemePref } from '@/lib/ui';
 
 const HM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -19,6 +19,7 @@ export default function SettingsScreen() {
   const { data, write, queue, sync, dismissOp, clearQueue, status } = useStore();
   const t = useTheme();
   const notify = useNotifyState();
+  const themePref = useThemePref();
   const cfg = getConfig(data);
   const settings = data.settings[0];
   const [error, setError] = useState<string | null>(null);
@@ -81,11 +82,12 @@ export default function SettingsScreen() {
   const problemOps = queue.filter((o) => o.state === 'failed' || o.state === 'rejected' || o.state === 'conflict');
 
   return (
-    <Screen>
-      <Row style={{ justifyContent: 'space-between' }} wrap>
-        <H size={24}>Settings</H>
-        <SyncStatus />
-      </Row>
+    <Screen subtitle="Preferences" title="Settings" right={<SyncStatus />}>
+      <Card>
+        <H size={17}>Appearance</H>
+        <Chips options={[{ value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]} value={themePref.pref} onChange={(v) => themePref.setPref(v as ThemePref)} />
+        <T muted size={13}>System follows your phone or browser setting. Saved on this device.</T>
+      </Card>
       <Row wrap>
         <SmallBtn title="Import / Export" onPress={() => router.push('/io')} />
         <SmallBtn title="Archive" onPress={() => router.push('/archive')} />

@@ -1,10 +1,11 @@
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { useNotificationSync } from '@/lib/notify';
 import { StoreProvider } from '@/lib/store';
-import { useTheme } from '@/lib/ui';
+import { ThemeProvider, useIsDark, useTheme, useThemePref } from '@/lib/ui';
 import SignInScreen from './sign-in';
 
 function NotificationSync() {
@@ -14,9 +15,11 @@ function NotificationSync() {
 
 function AuthedApp() {
   const { session, loading } = useAuth();
+  const { ready } = useThemePref();
   const t = useTheme();
+  const isDark = useIsDark();
 
-  if (loading) {
+  if (loading || !ready) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: t.bg }}>
         <ActivityIndicator accessibilityLabel="Loading" color={t.primary} />
@@ -36,8 +39,9 @@ function AuthedApp() {
   // Tabs live in (tabs); detail screens stack on top so they are reachable by URL and router.push.
   return (
     <StoreProvider>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <NotificationSync />
-      <Stack screenOptions={{ headerStyle: { backgroundColor: t.bg }, headerTintColor: t.text, contentStyle: { backgroundColor: t.bg } }}>
+      <Stack screenOptions={{ headerStyle: { backgroundColor: t.bg }, headerTintColor: t.text, headerTitleStyle: { fontWeight: '700' }, headerShadowVisible: false, contentStyle: { backgroundColor: t.bg } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
         <Stack.Screen name="course/[id]" options={{ title: 'Course' }} />
@@ -52,8 +56,10 @@ function AuthedApp() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <AuthedApp />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AuthedApp />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

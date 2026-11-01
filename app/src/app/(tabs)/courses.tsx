@@ -1,12 +1,12 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { examOps } from '@/lib/actions';
-import { activeChunks, courseColor, getTz, ITEM_TYPES, parseDue, pressure, remainingMin } from '@/lib/domain';
+import { activeChunks, courseColor, estMin, fmtDue, getTz, ITEM_TYPES, parseDue, pressure, remainingMin } from '@/lib/domain';
 import { useStore, uuid } from '@/lib/store';
 import type { Item, ItemType } from '@/lib/types';
-import { Btn, Card, Chips, Field, H, Row, Screen, SmallBtn, T, Toggle, useTheme } from '@/lib/ui';
+import { Btn, Card, Chips, Empty, Field, H, Pill, Progress, Row, Screen, SmallBtn, T, Toggle, useTheme } from '@/lib/ui';
 
 export default function CoursesScreen() {
   const { data, write } = useStore();
@@ -46,28 +46,34 @@ export default function CoursesScreen() {
   }
 
   return (
-    <Screen>
-      <Row style={{ justifyContent: 'space-between' }} wrap>
-        <H size={24}>Courses</H>
-        <SmallBtn title="Archive" onPress={() => router.push('/archive')} />
-      </Row>
+    <Screen subtitle="Fall semester" title="Courses" right={<SmallBtn ghost title="Archive" onPress={() => router.push('/archive')} />}>
       {courses.map((c) => {
         const items = data.items.filter((i) => i.course_id === c.id && i.status === 'active');
-        const left = items.reduce((s, i) => s + activeChunks(data, i.id).reduce((x, k) => x + remainingMin(data, k), 0), 0);
+        const chunks = items.flatMap((i) => activeChunks(data, i.id));
+        const left = chunks.reduce((x, k) => x + remainingMin(data, k), 0);
+        const total = chunks.reduce((x, k) => x + estMin(k), 0);
         const top = items.map((i) => pressure(data, i, now)).sort((a, b) => b - a)[0] ?? 0;
+        const nextDue = items.filter((i) => i.due_at).sort((a, b) => a.due_at!.localeCompare(b.due_at!))[0];
         return (
-          <Pressable key={c.id} accessibilityRole="button" onPress={() => router.push(`/course/${c.id}`)}>
+          <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={`Open ${c.short}`} onPress={() => router.push(`/course/${c.id}`)}>
             <Card accent={courseColor(data, c.id)}>
-              <Row wrap>
-                <T bold size={17}>{c.short}</T>
-                <T muted>{c.code} {c.name}</T>
+              <Row style={{ justifyContent: 'space-between' }}>
+                <View style={{ flexShrink: 1 }}>
+                  <T bold size={18}>{c.short}</T>
+                  <T muted size={13}>{c.code} · {c.name}</T>
+                </View>
+                {top >= 1 ? <Pill label="High pressure" color={t.danger} /> : top >= 0.5 ? <Pill label="Busy" color={t.warn} /> : null}
               </Row>
-              <T muted>{items.length} active items, {Math.round(left / 5) / 10} blocks left, top pressure {top.toFixed(2)}</T>
+              <Progress value={total ? 1 - left / total : 0} color={courseColor(data, c.id)} />
+              <Row style={{ justifyContent: 'space-between' }} wrap>
+                <T muted size={13}>{items.length} active · {Math.round(left / 5) / 10} blocks left</T>
+                {nextDue ? <T muted size={13}>Next due {fmtDue(nextDue.due_at, tz).slice(5, 10).replace('-', '/')}</T> : null}
+              </Row>
             </Card>
           </Pressable>
         );
       })}
-      {!courses.length ? <T muted>No courses yet. Add one below, or import from Settings, Import / Export.</T> : null}
+      {!courses.length ? <Empty title="No courses yet" body="Add your first course below, or import from Settings, Import / Export." /> : null}
 
       {courses.length ? (
         <Card>

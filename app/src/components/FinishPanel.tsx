@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Modal, ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { finishBlock, type Finish } from '@/lib/actions';
 import { blockMinutes, timerElapsed } from '@/lib/domain';
 import { useStore } from '@/lib/store';
 import type { Block } from '@/lib/types';
-import { Btn, Chips, Field, Row, SmallBtn, T, useTheme } from '@/lib/ui';
+import { Btn, Chips, Field, Row, Sheet, T, useTheme } from '@/lib/ui';
 
 // End-of-block tick: done / partial (percent per chunk, Contracts 3) / skipped, plus effort log.
 export function FinishPanel({ block, initial, onClose }: { block: Block; initial?: Finish['outcome']; onClose: () => void }) {
@@ -40,11 +40,7 @@ export function FinishPanel({ block, initial, onClose }: { block: Block; initial
   }
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 16 }}>
-        <View style={{ maxHeight: '92%', width: '100%', maxWidth: 520, alignSelf: 'center', backgroundColor: t.surface, borderRadius: 14, borderWidth: 1, borderColor: t.line }}>
-          <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }} keyboardShouldPersistTaps="handled">
-            <Text accessibilityRole="header" style={{ fontSize: 20, fontWeight: '700', color: t.text }}>Finish block</Text>
+    <Sheet title="Finish block" onClose={onClose}>
             <T muted>{block.start_time.slice(0, 5)} to {block.end_time.slice(0, 5)} {block.what ?? block.type}</T>
             <Chips label="Outcome" options={['done', 'partial', 'skipped'] as const} value={outcome} onChange={setOutcome} />
             <Field label="Actual minutes" value={actual} onChange={setActual} keyboard="numeric" />
@@ -75,10 +71,6 @@ export function FinishPanel({ block, initial, onClose }: { block: Block; initial
             <Field label="Note (optional)" value={note} onChange={setNote} multiline />
             {err ? <Text accessibilityRole="alert" style={{ color: t.danger, fontWeight: '600' }}>{err}</Text> : null}
             <Btn title="Save" onPress={save} />
-            <SmallBtn title="Cancel" onPress={onClose} />
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
+    </Sheet>
   );
 }

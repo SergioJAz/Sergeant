@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { removeBlock } from '@/lib/actions';
 import { activeChunks, blockConflicts } from '@/lib/domain';
 import { useStore } from '@/lib/store';
 import type { Block, BlockType } from '@/lib/types';
-import { Banner, Btn, Chips, Field, Row, SmallBtn, T, Toggle, useTheme } from '@/lib/ui';
+import { Banner, Btn, Chips, Field, Row, Sheet, SmallBtn, T, Toggle, useTheme } from '@/lib/ui';
 
 const TYPES: BlockType[] = ['Notes', 'Problems', 'Review', 'Mock', 'CheatSheet', 'Buffer', 'Rest', 'Break'];
 const HM = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -56,11 +56,7 @@ export function BlockEditor({ block, date, onClose }: { block: Block | null; dat
   }
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 16 }}>
-        <View style={{ maxHeight: '92%', width: '100%', maxWidth: 560, alignSelf: 'center', backgroundColor: t.surface, borderRadius: 14, borderWidth: 1, borderColor: t.line }}>
-          <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }} keyboardShouldPersistTaps="handled">
-            <Text accessibilityRole="header" style={{ fontSize: 20, fontWeight: '700', color: t.text }}>{block ? 'Edit block' : 'New block'}</Text>
+    <Sheet title={block ? 'Edit block' : 'New block'} onClose={onClose}>
             <Row wrap>
               <Field label="Date" value={f.date} onChange={(v) => set({ date: v })} placeholder="YYYY-MM-DD" />
               <Field label="Start" value={f.start} onChange={(v) => set({ start: v })} placeholder="HH:MM" />
@@ -101,12 +97,8 @@ export function BlockEditor({ block, date, onClose }: { block: Block | null; dat
             {err ? <Text accessibilityRole="alert" style={{ color: t.danger, fontWeight: '600' }}>{err}</Text> : null}
             <Btn title={warnings.length ? 'Save anyway' : 'Save'} onPress={save} />
             <Row wrap>
-              <SmallBtn title="Cancel" onPress={onClose} />
               {block ? <SmallBtn danger title={block.status === 'planned' ? 'Delete' : 'Mark skipped'} onPress={async () => { await removeBlock(write, data, block); onClose(); }} /> : null}
             </Row>
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
+    </Sheet>
   );
 }
