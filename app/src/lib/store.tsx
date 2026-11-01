@@ -42,8 +42,8 @@ function isProtected(op: Pick<Op, 'entity' | 'kind' | 'payload'>) {
 function applyLocal(data: Data, op: Op): Data {
   const rows = data[op.entity] as any[];
   let next: any[];
-  if (op.kind === 'insert') next = [...rows.filter((r) => r.id !== op.row_id), { ...op.payload, id: op.row_id, rev: 1 }];
-  else if (op.kind === 'update') next = rows.map((r) => (r.id === op.row_id ? { ...r, ...op.payload, rev: r.rev + 1 } : r));
+  if (op.kind === 'insert') next = [...rows.filter((r) => r.id !== op.row_id), { ...op.payload, id: op.row_id, rev: 1, created_at: op.created_at, updated_at: op.created_at }];
+  else if (op.kind === 'update') next = rows.map((r) => (r.id === op.row_id ? { ...r, ...op.payload, rev: r.rev + 1, updated_at: op.created_at } : r));
   else next = rows.filter((r) => r.id !== op.row_id);
   return { ...data, [op.entity]: next };
 }

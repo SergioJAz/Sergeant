@@ -6,6 +6,7 @@ import { BlockEditor } from '@/components/BlockEditor';
 import { FinishPanel } from '@/components/FinishPanel';
 import { BlockRow } from '@/components/BlockRow';
 import { SyncStatus } from '@/components/SyncStatus';
+import { TodoList } from '@/components/TodoList';
 import { cancelTimer, moveBlock, pauseTimer, resumeTimer, setSubtask, startTimer } from '@/lib/actions';
 import { blockEndMs, blockMinutes, blockStartMs, blocksOn, busyOn, courseColor, getConfig, getTz, timerElapsed } from '@/lib/domain';
 import { requestPermission, useNotifyState } from '@/lib/notify';
@@ -23,7 +24,6 @@ export default function TodayScreen() {
   const today = localDate(now, tz);
   const [editing, setEditing] = useState<Block | 'new' | null>(null);
   const [finishing, setFinishing] = useState<{ block: Block; outcome?: 'done' | 'partial' | 'skipped' } | null>(null);
-  const [milestone, setMilestone] = useState('');
   const notify = useNotifyState();
 
   const blocks = blocksOn(data, today);
@@ -64,7 +64,6 @@ export default function TodayScreen() {
 
   const elapsed = timer ? timerElapsed(timer, now) : 0;
   const timeUp = timer ? elapsed >= Number(timer.phase_target_ms) : false;
-  const todaysMilestones = data.milestones.filter((m) => m.date === today);
 
   const hero = current?.status === 'planned' ? current : next;
   const heroStartsIn = hero ? Math.round((blockStartMs(hero, tz) - now) / 60_000) : 0;
@@ -194,21 +193,7 @@ export default function TodayScreen() {
           )}
         </Section>
 
-        <Section title="Milestones">
-          {todaysMilestones.map((m) => (
-            <Pressable key={m.id} accessibilityRole="checkbox" accessibilityState={{ checked: m.done }} accessibilityLabel={m.title} onPress={() => void write([{ entity: 'milestones', kind: 'update', row_id: m.id, payload: { done: !m.done } }])}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12, backgroundColor: t.surface, borderWidth: 1, borderColor: t.line }}>
-              <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: m.done ? t.ok : t.border, backgroundColor: m.done ? t.ok : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                {m.done ? <Text style={{ color: t.onPrimary, fontSize: 12, fontWeight: '800' }}>✓</Text> : null}
-              </View>
-              <Text style={{ flex: 1, color: m.done ? t.muted : t.text, textDecorationLine: m.done ? 'line-through' : 'none', fontSize: 15 }}>{m.title}</Text>
-            </Pressable>
-          ))}
-          <Row style={{ alignItems: 'flex-end' }}>
-            <Field label="New milestone for today" value={milestone} onChange={setMilestone} placeholder="Finish L3 notes" />
-            <SmallBtn filled title="Add" disabled={!milestone.trim()} onPress={() => { void write([{ entity: 'milestones', kind: 'insert', payload: { date: today, title: milestone.trim(), parts: [], done: false } }]); setMilestone(''); }} />
-          </Row>
-        </Section>
+        <TodoList />
         <View style={{ height: 64 }} />
       </Screen>
 
