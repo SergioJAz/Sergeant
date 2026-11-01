@@ -1,15 +1,25 @@
-import { Tabs } from 'expo-router/js-tabs';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 
 import { AuthProvider, useAuth } from '@/lib/auth';
-import { useTheme } from '@/lib/ui';
+import { useNotificationSync } from '@/lib/notify';
+import { StoreProvider } from '@/lib/store';
+import { ThemeProvider, useIsDark, useTheme, useThemePref } from '@/lib/ui';
 import SignInScreen from './sign-in';
 
-function AuthedTabs() {
-  const { session, loading } = useAuth();
-  const t = useTheme();
+function NotificationSync() {
+  useNotificationSync();
+  return null;
+}
 
-  if (loading) {
+function AuthedApp() {
+  const { session, loading } = useAuth();
+  const { ready } = useThemePref();
+  const t = useTheme();
+  const isDark = useIsDark();
+
+  if (loading || !ready) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: t.bg }}>
         <ActivityIndicator accessibilityLabel="Loading" color={t.primary} />
@@ -26,29 +36,30 @@ function AuthedTabs() {
     );
   }
 
+  // Tabs live in (tabs); detail screens stack on top so they are reachable by URL and router.push.
   return (
-    <Tabs
-      screenOptions={{
-        sceneStyle: { backgroundColor: t.bg },
-        headerStyle: { backgroundColor: t.bg },
-        headerTintColor: t.text,
-        tabBarStyle: { backgroundColor: t.bg, borderTopColor: t.border },
-        tabBarActiveTintColor: t.primary,
-        tabBarInactiveTintColor: t.muted,
-      }}>
-      <Tabs.Screen name="index" options={{ title: 'Today' }} />
-      <Tabs.Screen name="week" options={{ title: 'Week' }} />
-      <Tabs.Screen name="courses" options={{ title: 'Courses' }} />
-      <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
-      <Tabs.Screen name="sign-in" options={{ href: null }} />
-    </Tabs>
+    <StoreProvider>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <NotificationSync />
+      <Stack screenOptions={{ headerStyle: { backgroundColor: t.bg }, headerTintColor: t.text, headerTitleStyle: { fontWeight: '700' }, headerShadowVisible: false, contentStyle: { backgroundColor: t.bg } }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+        <Stack.Screen name="course/[id]" options={{ title: 'Course' }} />
+        <Stack.Screen name="item/[id]" options={{ title: 'Item' }} />
+        <Stack.Screen name="archive" options={{ title: 'Archive' }} />
+        <Stack.Screen name="io" options={{ title: 'Import / Export' }} />
+        <Stack.Screen name="plan" options={{ title: 'Rebalance' }} />
+      </Stack>
+    </StoreProvider>
   );
 }
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <AuthedTabs />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AuthedApp />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

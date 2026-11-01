@@ -45,7 +45,7 @@ export default function SignInScreen() {
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16, backgroundColor: t.bg }}>
-    <View style={{ width: '100%', maxWidth: 400, padding: 28, gap: 12, borderRadius: 16, borderWidth: 1, borderColor: t.line, backgroundColor: t.surface, boxShadow: '0 8px 32px rgba(0,0,0,0.35)' }}>
+    <View style={{ width: '100%', maxWidth: 400, padding: 28, gap: 12, borderRadius: 16, borderWidth: 1, borderColor: t.line, backgroundColor: t.surface, boxShadow: t.shadow }}>
       <Text accessibilityRole="header" style={{ fontSize: 28, fontWeight: '700', color: t.text }}>
         Sergeant
       </Text>

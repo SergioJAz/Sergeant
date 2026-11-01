@@ -2,3 +2,4 @@
 .base-ast/
 .base-ast-cache/
 .claude/
+node_modules/
