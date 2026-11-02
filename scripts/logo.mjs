@@ -77,6 +77,11 @@ function png(file, size, bg, fg, scale) {
   writeFileSync(`${out}/${file}`, Buffer.concat([sig, chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0))]));
 }
 
+if (process.argv.includes('--pwa')) {
+  png('icon-192.png', 192, NAVY, AMBER, 0.78);
+  png('icon-512.png', 512, NAVY, AMBER, 0.78);
+  png('icon-maskable-512.png', 512, NAVY, AMBER, 0.5);
+} else {
 png('icon.png', 1024, NAVY, AMBER, 0.78);
 png('favicon.png', 48, NAVY, AMBER, 0.86);
 png('android-icon-background.png', 512, NAVY, NAVY, 0.5);
@@ -84,4 +89,5 @@ png('android-icon-background.png', 512, NAVY, NAVY, 0.5);
 png('android-icon-foreground.png', 512, null, AMBER, 0.5);
 png('android-icon-monochrome.png', 432, null, WHITE, 0.5);
 png('splash-icon.png', 512, null, AMBER, 0.9);
+}
 console.log('ok');
