@@ -2,18 +2,22 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
+import { Columns } from '@/components/Columns';
+import { KindMarker } from '@/components/KindMarker';
 import { examOps } from '@/lib/actions';
-import { activeChunks, courseColor, estMin, fmtDue, getTz, ITEM_TYPES, parseDue, pressure, remainingMin } from '@/lib/domain';
+import { activeChunks, estMin, fmtDue, getTz, ITEM_TYPES, parseDue, pressure, remainingMin } from '@/lib/domain';
 import { useStore, uuid } from '@/lib/store';
+import { dayLabel } from '@/lib/time';
 import type { Item, ItemType } from '@/lib/types';
-import { Btn, Card, Chips, Empty, Field, H, Pill, Progress, Row, Screen, SmallBtn, T, Toggle, useTheme } from '@/lib/ui';
+import { Btn, Card, Chips, Empty, Field, H, Pill, Progress, Row, Screen, Section, SmallBtn, T, Toggle, useTheme } from '@/lib/ui';
 
-export default function CoursesScreen() {
+export default function ProjectsScreen() {
   const { data, write } = useStore();
   const t = useTheme();
   const tz = getTz(data);
   const now = Date.now();
   const courses = data.courses.filter((c) => c.status === 'active').sort((a, b) => a.short.localeCompare(b.short));
+  const [showNew, setShowNew] = useState(!courses.length);
   const [nc, setNc] = useState({ code: '', name: '', short: '', semester: '' });
   const [qa, setQa] = useState({ course_id: '', type: 'homework' as ItemType, title: '', due: '', est: '1', laptop: false });
   const [err, setErr] = useState<string | null>(null);
@@ -23,6 +27,7 @@ export default function CoursesScreen() {
     if (!nc.code.trim() || !nc.name.trim() || !nc.short.trim()) return setErr('Code, name and short name are required.');
     await write([{ entity: 'courses', kind: 'insert', payload: { code: nc.code.trim(), name: nc.name.trim(), short: nc.short.trim(), semester: nc.semester.trim() || null, status: 'active' } }]);
     setNc({ code: '', name: '', short: '', semester: '' });
+    setShowNew(false);
     setErr(null);
   }
 
@@ -45,37 +50,55 @@ export default function CoursesScreen() {
     setMsg('Added.');
   }
 
-  return (
-    <Screen subtitle="Fall semester" title="Projects" right={<SmallBtn ghost title="Archive" onPress={() => router.push('/archive')} />}>
+  const uni = (
+    <Section key="uni" title="Uni" right={<T muted size={13}>by course</T>}>
       {courses.map((c) => {
         const items = data.items.filter((i) => i.course_id === c.id && i.status === 'active');
         const chunks = items.flatMap((i) => activeChunks(data, i.id));
         const left = chunks.reduce((x, k) => x + remainingMin(data, k), 0);
         const total = chunks.reduce((x, k) => x + estMin(k), 0);
-        const top = items.map((i) => pressure(data, i, now)).sort((a, b) => b - a)[0] ?? 0;
-        const nextDue = items.filter((i) => i.due_at).sort((a, b) => a.due_at!.localeCompare(b.due_at!))[0];
+        const ranked = items.map((item) => ({ item, value: pressure(data, item, now) })).sort((a, b) => b.value - a.value);
+        const top = ranked[0]?.value ?? 0;
+        const current = ranked[0]?.item;
         return (
           <Pressable key={c.id} accessibilityRole="button" accessibilityLabel={`Open ${c.short}`} onPress={() => router.push(`/course/${c.id}`)}>
-            <Card accent={courseColor(data, c.id)}>
-              <Row style={{ justifyContent: 'space-between' }}>
-                <View style={{ flexShrink: 1 }}>
-                  <T bold size={18}>{c.short}</T>
-                  <T muted size={13}>{c.code} · {c.name}</T>
-                </View>
+            <Card>
+              <Row style={{ justifyContent: 'space-between' }} wrap>
+                <Row style={{ flex: 1, minWidth: 0 }}>
+                  <KindMarker kind="uni" />
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <T bold size={18}>{c.short}</T>
+                    <T muted size={13}>{c.name}</T>
+                  </View>
+                </Row>
                 {top >= 1 ? <Pill label="High pressure" color={t.danger} /> : top >= 0.5 ? <Pill label="Busy" color={t.warn} /> : null}
               </Row>
-              <Progress value={total ? 1 - left / total : 0} color={courseColor(data, c.id)} />
-              <Row style={{ justifyContent: 'space-between' }} wrap>
-                <T muted size={13}>{items.length} active · {Math.round(left / 5) / 10} blocks left</T>
-                {nextDue ? <T muted size={13}>Next due {fmtDue(nextDue.due_at, tz).slice(5, 10).replace('-', '/')}</T> : null}
-              </Row>
+              {current ? <T size={14}>{current.title} · {current.due_at ? `due ${dayLabel(fmtDue(current.due_at, tz).slice(0, 10))}` : 'no due date'}</T> : null}
+              <Progress value={total ? 1 - left / total : 0} color={t.uni} />
+              <T muted size={13}>{items.length} active · {Math.round(left / 5) / 10} blocks left</T>
             </Card>
           </Pressable>
         );
       })}
       {!courses.length ? <Empty title="No courses yet" body="Add your first course below, or import from Settings, Import / Export." /> : null}
+      <Row><SmallBtn ghost title="+ New course" onPress={() => setShowNew((value) => !value)} /></Row>
+      {showNew ? (
+        <Card>
+          <H size={17}>New course</H>
+          <Row wrap>
+            <Field label="Code" value={nc.code} onChange={(v) => setNc({ ...nc, code: v })} placeholder="CPEN448" />
+            <Field label="Short" value={nc.short} onChange={(v) => setNc({ ...nc, short: v })} placeholder="Cloud" />
+          </Row>
+          <Field label="Name" value={nc.name} onChange={(v) => setNc({ ...nc, name: v })} />
+          <Field label="Semester" value={nc.semester} onChange={(v) => setNc({ ...nc, semester: v })} placeholder="Fall 2026" />
+          <Btn title="Add course" onPress={addCourse} />
+        </Card>
+      ) : null}
+    </Section>
+  );
 
-      {courses.length ? (
+  const quickAddSection = courses.length ? (
+    <Section key="add" title="Add to a course">
         <Card>
           <H size={17}>Quick add</H>
           <Chips label="Course" options={courses.map((c) => ({ value: c.id, label: c.short }))} value={qa.course_id} onChange={(v) => setQa({ ...qa, course_id: v })} />
@@ -89,18 +112,12 @@ export default function CoursesScreen() {
           <Btn title="Add item" onPress={quickAdd} />
           {msg ? <T color={t.ok}>{msg}</T> : null}
         </Card>
-      ) : null}
+    </Section>
+  ) : null;
 
-      <Card>
-        <H size={17}>New course</H>
-        <Row wrap>
-          <Field label="Code" value={nc.code} onChange={(v) => setNc({ ...nc, code: v })} placeholder="CPEN448" />
-          <Field label="Short" value={nc.short} onChange={(v) => setNc({ ...nc, short: v })} placeholder="Cloud" />
-        </Row>
-        <Field label="Name" value={nc.name} onChange={(v) => setNc({ ...nc, name: v })} />
-        <Field label="Semester" value={nc.semester} onChange={(v) => setNc({ ...nc, semester: v })} placeholder="Fall 2026" />
-        <Btn title="Add course" onPress={addCourse} />
-      </Card>
+  return (
+    <Screen wide subtitle="Uni and your own stuff" title="Projects" right={<SmallBtn ghost title="Archive" onPress={() => router.push('/archive')} />}>
+      <Columns sections={quickAddSection ? [uni, quickAddSection] : [uni]} plan={{ 2: quickAddSection ? [[0], [1]] : [[0]], 3: quickAddSection ? [[0], [1]] : [[0]] }} />
       {err ? <Text accessibilityRole="alert" style={{ color: t.danger, fontWeight: '600' }}>{err}</Text> : null}
     </Screen>
   );

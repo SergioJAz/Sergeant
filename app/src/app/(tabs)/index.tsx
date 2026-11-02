@@ -97,11 +97,11 @@ export default function TodayScreen() {
             const slot = nextSlot(blockMinutes(b));
             return (
               <View key={b.id} style={{ gap: 6 }}>
-                <T>{b.date === today ? '' : 'Yesterday, '}{b.start_time.slice(0, 5)} {course(b.course_id)} {b.what ?? b.type}</T>
+                <T>{b.date === today ? '' : 'Yesterday, '}{clock(hmToMin(b.start_time))} {course(b.course_id)} {b.what ?? b.type}</T>
                 <Row wrap>
                   <SmallBtn title="Done" onPress={() => setFinishing({ block: b, outcome: 'done' })} />
                   <SmallBtn title="Partial" onPress={() => setFinishing({ block: b, outcome: 'partial' })} />
-                  {slot ? <SmallBtn title={`Move to ${slot.start_time}`} onPress={() => void moveBlock(write, b, slot)} /> : null}
+                  {slot ? <SmallBtn title={`Move to ${clock(hmToMin(slot.start_time))}`} onPress={() => void moveBlock(write, b, slot)} /> : null}
                   <SmallBtn danger title="Skip" onPress={() => setFinishing({ block: b, outcome: 'skipped' })} />
                 </Row>
               </View>

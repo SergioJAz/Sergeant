@@ -1,30 +1,35 @@
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
-import { blocksOn } from '@/lib/domain';
+import { kindDots } from '@/lib/agenda';
+import { dayEntries } from '@/lib/domain';
+import { KIND_LABEL } from '@/lib/kinds';
 import { useStore } from '@/lib/store';
 import { addDays, weekday, WEEKDAYS } from '@/lib/time';
-import { useTheme } from '@/lib/ui';
+import { interactive, T, useTheme, type PState } from '@/lib/ui';
 
-// Week strip: tap a day; a dot shows days that have study blocks.
+// Seven days always fit the page; dots show the kinds scheduled that day.
 export function DayStrip({ start, value, today, onChange }: { start: string; value: string; today: string; onChange: (d: string) => void }) {
   const { data } = useStore();
   const t = useTheme();
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, flexGrow: 1 }}>
+    <View style={{ flexDirection: 'row', gap: 4 }}>
       {days.map((d) => {
         const on = d === value;
-        const isToday = d === today;
-        const count = blocksOn(data, d).filter((b) => !['Break', 'Rest', 'Fixed'].includes(b.type)).length;
+        const kinds = kindDots(dayEntries(data, d));
         return (
-          <Pressable key={d} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={`${WEEKDAYS[weekday(d)]} ${Number(d.slice(8))}, ${count} blocks`} onPress={() => onChange(d)}
-            style={{ flex: 1, minWidth: 44, paddingVertical: 8, borderRadius: 14, alignItems: 'center', gap: 2, backgroundColor: on ? t.primary : t.surface, borderWidth: 1, borderColor: on ? t.primary : isToday ? t.primary : t.line }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: on ? t.onPrimary : t.muted }}>{WEEKDAYS[weekday(d)].toUpperCase()}</Text>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: on ? t.onPrimary : t.text }}>{Number(d.slice(8))}</Text>
-            <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: count ? (on ? t.onPrimary : t.primary) : 'transparent' }} />
+          <Pressable key={d} accessibilityRole="tab" accessibilityState={{ selected: on }}
+            accessibilityLabel={`${WEEKDAYS[weekday(d)]} ${Number(d.slice(8))}${kinds.length ? `, ${kinds.map((k) => KIND_LABEL[k]).join(', ')}` : ', nothing planned'}`}
+            onPress={() => onChange(d)}
+            style={(st) => ({ flex: 1, minWidth: 0, minHeight: 44, paddingVertical: 8, borderRadius: t.radius, alignItems: 'center', gap: 2, backgroundColor: on ? t.text : t.surface, ...interactive(t, st as PState) })}>
+            <T size={12} bold color={on ? t.bg : t.muted}>{WEEKDAYS[weekday(d)]}</T>
+            <T size={17} bold color={on ? t.bg : d === today ? t.primary : t.text}>{Number(d.slice(8))}</T>
+            <View style={{ flexDirection: 'row', gap: 2, minHeight: 5 }}>
+              {kinds.map((k) => <View key={k} style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: t[k] }} />)}
+            </View>
           </Pressable>
         );
       })}
-    </ScrollView>
+    </View>
   );
 }

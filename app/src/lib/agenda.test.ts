@@ -60,6 +60,15 @@ test('dayBounds: first to last entry, capped at stop, overnight sleep ignored', 
   assert.deepEqual(dayBounds(hm('08:20'), hm('23:00'), []), { start: hm('08:20'), end: hm('23:00') });
   assert.equal(dayBounds(hm('08:20'), hm('23:00'), [entry(hm('22:30'), hm('23:30'))]).end, hm('23:00'));
 });
+test('dayBounds ignores neutral overnight anchors crossing wake or stop', () => {
+  const sleep = [entry(0, hm('09:00')), entry(hm('22:00'), 1440)];
+  const study = entry(hm('10:00'), hm('11:00'), { block: blk('study', '10:00', '11:00') });
+  assert.deepEqual(dayBounds(hm('08:00'), hm('23:00'), [...sleep, study]), { start: hm('10:00'), end: hm('11:00') });
+  assert.deepEqual(dayBounds(hm('08:00'), hm('23:00'), sleep), { start: hm('08:00'), end: hm('23:00') });
+  const early = entry(hm('07:30'), hm('09:00'), { kind: 'train' });
+  assert.deepEqual(dayBounds(hm('08:00'), hm('23:00'), [early]), { start: hm('07:30'), end: hm('09:00') });
+});
+
 test('plannedMin, kindTotals, kindDots count kinds and skip neutral anchors and skipped blocks', () => {
   const e = [
     entry(hm('09:00'), hm('10:30'), { kind: 'uni', block: blk('b1', '09:00', '10:30', { course_id: 'c' }) }),

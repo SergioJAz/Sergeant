@@ -10,6 +10,22 @@ related: [2026-11-02-sergeant-redesign-design, 2026-11-02-sergeant-redesign-demo
 
 # Phase 2: Today, Week and Projects Screens Implementation Plan
 
+## Codex continuation, 2026-11-02
+
+- Tasks 1 through 4 were committed before this continuation.
+- Tasks 5 and 6 layouts are implemented and reviewed for the beta branch.
+- Independent review found and resolved overnight day-bound and missed-block clock-format issues.
+- Verification: 77 tests pass, TypeScript passes, and the web export passes its em dash check.
+- Browser preview reaches sign-in; authenticated layout checks remain pending.
+- Android device checks remain pending because no device is connected.
+- The user requested an APK after the initial continuation, overriding the previous build deferral.
+- Android release build passed using `gradlew.bat assembleRelease --max-workers=2`.
+- APK signature verification passed; its signing certificate matches the previous APK.
+- The APK contains the updated Today, Week, and Projects screens; phone installation remains unverified.
+- Lint could not complete without installing missing dependencies; no dependency changes were retained.
+- Conductor config has no `worklogDir`; this repository has no configured shared worklog.
+- The user authorized committing and pushing APK builds to `beta` after the initial handoff.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Today, Week and Projects are rebuilt on four kinds of things (uni, side project, training, errand) with the demo's layout: a now card, a timeline with free gaps, a week view that shows the kinds at a glance, and a Projects tab, inside a four-tab nav.

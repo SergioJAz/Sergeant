@@ -38,3 +38,13 @@ SQL tests (repo root): `npm i --no-save @electric-sql/pglite && node supabase/te
 
 Cloud: `npx eas-cli build -p android --profile preview`.
 Local (Android Studio JDK + SDK): `npx expo prebuild -p android`, then in `android/` run `gradlew assembleRelease`; APK at `android/app/build/outputs/apk/release/app-release.apk`, install with `adb install -r <apk>`.
+
+## Beta APK workflow
+
+After a successful APK build, commit the related source changes and push them to the `beta` branch.
+Upload the verified APK to the dedicated [Sergeant Beta folder](https://drive.google.com/drive/folders/19gvNErlBOAPBIl_W7Tc5DUffBTjeDs4F) in Google Drive.
+Keep APK files out of Git and preserve existing Drive sharing settings.
+Use a dated filename; include the commit hash when multiple builds share a date.
+Verify the uploaded file's name, size, and destination folder before sharing its link.
+
+The local release build passed with `gradlew.bat assembleRelease --max-workers=2` on 2026-11-02.

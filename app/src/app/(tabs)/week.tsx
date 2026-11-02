@@ -1,100 +1,110 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
+import { AgendaRow } from '@/components/AgendaRow';
 import { BlockEditor } from '@/components/BlockEditor';
-import { BlockRow } from '@/components/BlockRow';
 import { DayStrip } from '@/components/DayStrip';
 import { FinishPanel } from '@/components/FinishPanel';
-import { blockMinutes, blocksOn, busyOn, courseColor, getTz } from '@/lib/domain';
+import { KindMarker } from '@/components/KindMarker';
+import { fmtClock, fmtDur, kindTotals, plannedMin, type AgendaEntry } from '@/lib/agenda';
+import { blockEndMs, dayEntries, getTz } from '@/lib/domain';
+import { KINDS, KIND_LABEL } from '@/lib/kinds';
 import { useStore } from '@/lib/store';
-import { addDays, dayLabel, localDate, minToHm, mondayOf } from '@/lib/time';
+import { addDays, dayLabel, localDate, mondayOf, weekday, WEEKDAYS } from '@/lib/time';
 import type { Block } from '@/lib/types';
-import { Empty, Progress, Row, Screen, Section, SmallBtn, T, Toggle, useTheme } from '@/lib/ui';
-
-const STUDY = (b: Block) => !['Break', 'Rest', 'Fixed'].includes(b.type);
+import { Empty, interactive, Progress, Row, Screen, Section, SmallBtn, T, useNow, useTheme, type PState } from '@/lib/ui';
+import { columnsFor } from '@/theme/layout';
 
 export default function WeekScreen() {
   const { data } = useStore();
   const t = useTheme();
+  const now = useNow(30_000);
   const tz = getTz(data);
-  const today = localDate(Date.now(), tz);
+  const today = localDate(now, tz);
   const [monday, setMonday] = useState(mondayOf(today));
   const [day, setDay] = useState(today);
+  const [width, setWidth] = useState(0);
   const [editing, setEditing] = useState<Block | 'new' | null>(null);
   const [finishing, setFinishing] = useState<Block | null>(null);
-  const [showFixed, setShowFixed] = useState(true);
+  const wide = columnsFor(width + 32) > 1;
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
-  const weekBlocks = days.flatMap((d) => blocksOn(data, d)).filter(STUDY);
-  const weekMin = weekBlocks.reduce((s, b) => s + blockMinutes(b), 0);
-  const doneMin = weekBlocks.filter((b) => b.status === 'done' || b.status === 'partial').reduce((s, b) => s + blockMinutes(b), 0);
-  const byCourse = new Map<string | null, number>();
-  for (const b of weekBlocks) byCourse.set(b.course_id, (byCourse.get(b.course_id) ?? 0) + blockMinutes(b));
-
-  const blocks = blocksOn(data, day);
-  const timeline = [
-    ...(showFixed ? busyOn(data, day).map((f) => ({ kind: 'fixed' as const, start: f.start, f })) : []),
-    ...blocks.map((b) => ({ kind: 'block' as const, start: Number(b.start_time.slice(0, 2)) * 60 + Number(b.start_time.slice(3, 5)), b })),
-  ].sort((a, b) => a.start - b.start);
+  const entriesByDay = days.map((d) => dayEntries(data, d).filter((e) => e.kind !== null || e.block !== null));
+  const entries = entriesByDay.flat();
+  const selected = entriesByDay[days.indexOf(day)] ?? [];
+  const weekMin = plannedMin(entries);
+  const doneMin = entries.filter((e) => e.block?.status === 'done' || e.block?.status === 'partial').reduce((s, e) => s + e.end - e.start, 0);
+  const totals = kindTotals(entries);
+  const kinds = KINDS.filter((k) => totals[k] > 0);
 
   const shift = (n: number) => {
     setMonday(addDays(monday, n));
     setDay(addDays(day, n));
   };
+  const openCard = (entry: AgendaEntry) => {
+    const b = entry.block;
+    if (!b) return;
+    setDay(b.date);
+    if (b.status === 'planned' && !['Break', 'Rest', 'Fixed'].includes(b.type) && blockEndMs(b, tz) < now) setFinishing(b);
+    else setEditing(b);
+  };
 
   return (
-    <Screen subtitle={`Week of ${dayLabel(monday)}`} title="Week" right={<Row style={{ gap: 8 }}><SmallBtn ghost title="Stats" onPress={() => router.push('/stats')} /><SmallBtn filled title="Auto-fill" onPress={() => router.push('/plan')} /></Row>}>
+    <Screen wide subtitle={`Week of ${dayLabel(monday)}`} title="Week" right={
+      <View style={{ gap: 8, alignItems: 'flex-end' }}>
+        <T muted size={13}>{fmtDur(weekMin)} planned</T>
+        <Row wrap><SmallBtn ghost title="Stats" onPress={() => router.push('/stats')} /><SmallBtn filled title="Auto-fill" onPress={() => router.push('/plan')} /></Row>
+      </View>
+    }>
       <Row style={{ justifyContent: 'space-between' }}>
         <SmallBtn ghost title="Previous" onPress={() => shift(-7)} />
         {monday !== mondayOf(today) ? <SmallBtn ghost title="This week" onPress={() => { setMonday(mondayOf(today)); setDay(today); }} /> : null}
         <SmallBtn ghost title="Next" onPress={() => shift(7)} />
       </Row>
-      <DayStrip start={monday} value={day} today={today} onChange={setDay} />
-
-      <View style={{ padding: 14, borderRadius: 14, backgroundColor: t.surface, borderWidth: 1, borderColor: t.line, gap: 8, boxShadow: t.shadow }}>
-        <Row style={{ justifyContent: 'space-between' }}>
-          <T bold>{(weekMin / 60).toFixed(1)} h planned</T>
-          <T muted>{(doneMin / 60).toFixed(1)} h done</T>
-        </Row>
-        <Progress value={weekMin ? doneMin / weekMin : 0} color={t.ok} />
-        <Row wrap>
-          {[...byCourse.entries()].map(([cid, min]) => (
-            <Row key={cid ?? 'none'} style={{ gap: 4 }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: courseColor(data, cid) }} />
-              <Text style={{ color: t.muted, fontSize: 13 }}>{data.courses.find((c) => c.id === cid)?.short ?? 'No course'} {(min / 60).toFixed(1)}h</Text>
-            </Row>
-          ))}
-        </Row>
-      </View>
-
-      <Section title={dayLabel(day)} right={<SmallBtn title="Add block" onPress={() => setEditing('new')} />}>
-        <Toggle label="Show classes, sport and other fixed events" value={showFixed} onChange={setShowFixed} />
-        {timeline.length ? (
-          <View>
-            {timeline.map((x, i) =>
-              x.kind === 'fixed' ? (
-                <View key={`f${i}`} style={{ flexDirection: 'row', gap: 10 }}>
-                  <View style={{ width: 46, alignItems: 'flex-end', paddingTop: 8 }}>
-                    <Text style={{ color: t.muted, fontSize: 13, fontWeight: '600' }}>{minToHm(x.f.start)}</Text>
-                  </View>
-                  <View style={{ alignItems: 'center', width: 16 }}>
-                    <View style={{ width: 2, flex: 1, backgroundColor: t.line }} />
-                  </View>
-                  <View style={{ flex: 1, marginBottom: 10, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, backgroundColor: t.surface2 }}>
-                    <Text style={{ color: t.muted, fontWeight: '600' }}>{x.f.label}</Text>
-                    <Text style={{ color: t.muted, fontSize: 12 }}>until {x.f.end >= 1440 ? '24:00' : minToHm(x.f.end)}</Text>
-                  </View>
+      <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ gap: 14 }}>
+        {!wide ? <DayStrip start={monday} value={day} today={today} onChange={setDay} /> : null}
+        <Section title={dayLabel(day)} right={
+          <Row wrap><T muted size={13}>{fmtDur(plannedMin(selected))}</T><SmallBtn title="Add block" onPress={() => setEditing('new')} /></Row>
+        }>
+          {wide ? (
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+              {days.map((d, i) => (
+                <View key={d} style={{ flex: 1, minWidth: 0, gap: 8 }}>
+                  <Pressable accessibilityRole="button" accessibilityLabel={`Select ${dayLabel(d)}`} accessibilityState={{ selected: d === day }} onPress={() => setDay(d)}
+                    style={(st) => ({ minHeight: 44, gap: 2, padding: 4, borderRadius: t.radius, borderWidth: 1, borderColor: d === day ? t.line : 'transparent', ...interactive(t, st as PState) })}>
+                    <T size={13} muted>{WEEKDAYS[weekday(d)]}</T>
+                    <T size={20} bold color={d === today ? t.primary : t.text}>{Number(d.slice(8))}</T>
+                    <T size={12} muted>{fmtDur(plannedMin(entriesByDay[i]))}</T>
+                  </Pressable>
+                  {entriesByDay[i].map((e) => (
+                    <View key={e.key} style={{ backgroundColor: t.surface, borderRadius: t.radius }}>
+                      <Pressable accessibilityRole={e.block ? 'button' : undefined} disabled={!e.block} onPress={() => openCard(e)}
+                        style={(st) => ({ minHeight: 44, padding: 8, gap: 4, borderRadius: t.radius, backgroundColor: e.kind ? `${t[e.kind]}29` : t.surface2,
+                          ...(e.block ? interactive(t, st as PState) : null), opacity: (e.finished ? 0.5 : 1) * (st.pressed ? 0.8 : 1) })}>
+                        <T size={12} muted>{fmtClock(e.start, t.clock24)}</T>
+                        <View style={{ flexShrink: 1, minWidth: 0 }}><T size={13} bold strike={e.finished}>{e.title}</T></View>
+                        <T size={12} muted>{fmtDur(e.end - e.start)}</T>
+                      </Pressable>
+                    </View>
+                  ))}
                 </View>
-              ) : (
-                <BlockRow key={x.b.id} block={x.b} last={i === timeline.length - 1} onEdit={() => setEditing(x.b)} onFinish={() => setFinishing(x.b)} />
-              )
-            )}
+              ))}
+            </View>
+          ) : selected.length ? (
+            <View>{selected.map((e) => <AgendaRow key={e.key} entry={e} clock24={t.clock24} onPress={e.block ? () => setEditing(e.block) : undefined} onFinish={e.block ? () => setFinishing(e.block) : undefined} />)}</View>
+          ) : <Empty title="Free day" body="No blocks on this day yet." />}
+        </Section>
+        <Section title="Week at a glance">
+          <View style={{ padding: 14, borderRadius: t.radius, backgroundColor: t.surface, gap: 12 }}>
+            {kinds.length ? kinds.map((k) => (
+              <Row key={k}><KindMarker kind={k} size={20} /><View style={{ flex: 1 }}><T>{KIND_LABEL[k]}</T></View><T muted>{fmtDur(totals[k])}</T></Row>
+            )) : <T muted>Nothing planned this week</T>}
+            <Row wrap style={{ justifyContent: 'space-between' }}><T bold>{fmtDur(weekMin)} planned</T><T muted>{fmtDur(doneMin)} done</T></Row>
+            <Progress value={weekMin ? doneMin / weekMin : 0} color={t.ok} />
           </View>
-        ) : (
-          <Empty title="Free day" body="No blocks on this day yet." />
-        )}
-      </Section>
+        </Section>
+      </View>
       {editing ? <BlockEditor block={editing === 'new' ? null : editing} date={day} onClose={() => setEditing(null)} /> : null}
       {finishing ? <FinishPanel block={finishing} onClose={() => setFinishing(null)} /> : null}
     </Screen>

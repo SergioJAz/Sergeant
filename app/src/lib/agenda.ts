@@ -46,7 +46,9 @@ export function nowState(entries: AgendaEntry[], nowMin: number): { current: Age
 }
 
 export function dayBounds(wakeMin: number, stopMin: number, entries: AgendaEntry[]): { start: number; end: number } {
-  const inDay = entries.filter((e) => e.end > wakeMin && e.start < stopMin);
+  // Neutral overnight anchors must not stretch the waking day's header to midnight.
+  const inDay = entries.filter((e) => e.end > wakeMin && e.start < stopMin
+    && (e.block !== null || e.kind !== null || (e.start >= wakeMin && e.end <= stopMin)));
   if (!inDay.length) return { start: wakeMin, end: stopMin };
   return { start: Math.min(...inDay.map((e) => e.start)), end: Math.min(stopMin, Math.max(...inDay.map((e) => e.end))) };
 }
