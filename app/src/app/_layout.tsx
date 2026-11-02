@@ -75,6 +75,7 @@ function AuthedApp() {
         <Stack.Screen name="archive" options={{ title: 'Archive' }} />
         <Stack.Screen name="io" options={{ title: 'Import / Export' }} />
         <Stack.Screen name="plan" options={{ title: 'Rebalance' }} />
+        <Stack.Screen name="stats" options={{ title: 'Stats' }} />
       </Stack>
     </StoreProvider>
   );

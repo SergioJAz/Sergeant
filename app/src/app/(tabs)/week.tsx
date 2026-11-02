@@ -44,7 +44,7 @@ export default function WeekScreen() {
   };
 
   return (
-    <Screen subtitle={`Week of ${dayLabel(monday)}`} title="Week" right={<SmallBtn filled title="Auto-fill" onPress={() => router.push('/plan')} />}>
+    <Screen subtitle={`Week of ${dayLabel(monday)}`} title="Week" right={<Row style={{ gap: 8 }}><SmallBtn ghost title="Stats" onPress={() => router.push('/stats')} /><SmallBtn filled title="Auto-fill" onPress={() => router.push('/plan')} /></Row>}>
       <Row style={{ justifyContent: 'space-between' }}>
         <SmallBtn ghost title="Previous" onPress={() => shift(-7)} />
         {monday !== mondayOf(today) ? <SmallBtn ghost title="This week" onPress={() => { setMonday(mondayOf(today)); setDay(today); }} /> : null}

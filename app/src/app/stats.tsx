@@ -19,11 +19,11 @@ export default function StatsScreen() {
   const fmtRatio = (r: number | null) => (r == null ? 'n/a' : r.toFixed(2));
 
   return (
-    <Screen subtitle="Insights" title="Stats" right={
-        <Row>
-          <SmallBtn title="Previous" onPress={() => setWeek(addDays(week, -7))} />
-          <SmallBtn title="Next" onPress={() => setWeek(addDays(week, 7))} />
-        </Row>}>
+    <Screen>
+      <Row>
+        <SmallBtn title="Previous" onPress={() => setWeek(addDays(week, -7))} />
+        <SmallBtn title="Next" onPress={() => setWeek(addDays(week, 7))} />
+      </Row>
       <T muted>Week of {dayLabel(week)} (Monday to Sunday, {tz})</T>
       <Row wrap>
         <Card style={{ flexGrow: 1 }}><T muted>This week</T><T bold size={24}>{(s.weekMin / 60).toFixed(1)} h</T></Card>

@@ -30,7 +30,7 @@ export default function ItemScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item?.id]);
 
-  if (!item) return <Screen><T>Item not found.</T><SmallBtn title="Back" onPress={() => router.push('/courses')} /></Screen>;
+  if (!item) return <Screen><T>Item not found.</T><SmallBtn title="Back" onPress={() => router.push('/projects')} /></Screen>;
   const it: Item = item;
   const chunks = activeChunks(data, it.id);
   const course = data.courses.find((c) => c.id === it.course_id);

@@ -23,11 +23,10 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: t.bg },
         tabBarPosition: nl.position,
       }}>
-      <Tabs.Screen name="index" options={{ tabBarIcon: icon('today'), title: 'Today' }} />
+      <Tabs.Screen name="index" options={{ tabBarIcon: icon('time'), title: 'Today' }} />
       <Tabs.Screen name="week" options={{ tabBarIcon: icon('calendar'), title: 'Week' }} />
-      <Tabs.Screen name="courses" options={{ tabBarIcon: icon('library'), title: 'Courses' }} />
-      <Tabs.Screen name="stats" options={{ tabBarIcon: icon('stats-chart'), title: 'Stats' }} />
-      <Tabs.Screen name="settings" options={{ tabBarIcon: icon('settings'), title: 'Settings' }} />
+      <Tabs.Screen name="projects" options={{ tabBarIcon: icon('folder'), title: 'Projects' }} />
+      <Tabs.Screen name="settings" options={{ tabBarIcon: icon('options'), title: 'Settings' }} />
     </Tabs>
   );
 }

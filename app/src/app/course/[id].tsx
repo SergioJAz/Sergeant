@@ -24,7 +24,7 @@ export default function CourseScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [c?.id]);
 
-  if (!c) return <Screen><T>Course not found.</T><SmallBtn title="Back" onPress={() => router.push('/courses')} /></Screen>;
+  if (!c) return <Screen><T>Course not found.</T><SmallBtn title="Back" onPress={() => router.push('/projects')} /></Screen>;
   const course = c;
   const items = data.items.filter((i) => i.course_id === course.id && i.status !== 'archived');
   const now = Date.now();
@@ -55,7 +55,7 @@ export default function CourseScreen() {
     <Screen>
       <Row style={{ justifyContent: 'space-between' }} wrap>
         <H size={24}>{course.short}</H>
-        <SmallBtn title="All courses" onPress={() => router.push('/courses')} />
+        <SmallBtn title="All courses" onPress={() => router.push('/projects')} />
       </Row>
       {ITEM_TYPES.map((type) => {
         const list = items.filter((i) => i.type === type).sort((a, b) => (a.due_at ?? '9').localeCompare(b.due_at ?? '9'));
@@ -100,7 +100,7 @@ export default function CourseScreen() {
         <Field label="Notes" value={f.notes} onChange={(v) => setF({ ...f, notes: v })} multiline />
         <Btn title="Save course" onPress={save} />
         {saved ? <T color={t.ok}>Saved.</T> : null}
-        <SmallBtn danger title="Archive course (items, chunks, future blocks)" onPress={async () => { await archiveCourse(write, data, course.id, true); router.push('/courses'); }} />
+        <SmallBtn danger title="Archive course (items, chunks, future blocks)" onPress={async () => { await archiveCourse(write, data, course.id, true); router.push('/projects'); }} />
       </Card>
       {err ? <Text accessibilityRole="alert" style={{ color: t.danger, fontWeight: '600' }}>{err}</Text> : null}
     </Screen>

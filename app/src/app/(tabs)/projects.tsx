@@ -46,7 +46,7 @@ export default function CoursesScreen() {
   }
 
   return (
-    <Screen subtitle="Fall semester" title="Courses" right={<SmallBtn ghost title="Archive" onPress={() => router.push('/archive')} />}>
+    <Screen subtitle="Fall semester" title="Projects" right={<SmallBtn ghost title="Archive" onPress={() => router.push('/archive')} />}>
       {courses.map((c) => {
         const items = data.items.filter((i) => i.course_id === c.id && i.status === 'active');
         const chunks = items.flatMap((i) => activeChunks(data, i.id));
