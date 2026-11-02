@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DEFAULT_APPEARANCE, parseAppearance, resolveMode, resolveTokens, type Appearance, type CustomTheme, type Overrides } from '@/theme/appearance';
 import { fontFamily } from '@/theme/fonts';
+import { navLayout } from '@/theme/layout';
 import type { Mode, Tokens } from '@/theme/palette';
 
 export type Theme = Tokens & {
@@ -94,8 +95,8 @@ export function useIsDark() {
 }
 
 // Web hover and keyboard focus ring; native ignores the extra keys.
-type PState = { pressed: boolean; hovered?: boolean; focused?: boolean };
-function interactive(t: Theme, st: PState, disabled?: boolean) {
+export type PState = { pressed: boolean; hovered?: boolean; focused?: boolean };
+export function interactive(t: Theme, st: PState, disabled?: boolean) {
   return {
     opacity: disabled ? 0.45 : st.pressed ? 0.8 : 1,
     outlineStyle: st.focused ? 'solid' : 'none',
@@ -136,12 +137,12 @@ export function Btn({ title, onPress, disabled, secondary, danger }: { title: st
 }
 
 // Compact action: tonal by default, outlined red for destructive, ghost for low emphasis.
-export function SmallBtn({ title, onPress, danger, disabled, ghost, filled }: { title: string; onPress: () => void; danger?: boolean; disabled?: boolean; ghost?: boolean; filled?: boolean }) {
+export function SmallBtn({ title, label, onPress, danger, disabled, ghost, filled }: { title: string; label?: string; onPress: () => void; danger?: boolean; disabled?: boolean; ghost?: boolean; filled?: boolean }) {
   const t = useTheme();
   const fg = filled ? t.onPrimary : danger ? t.danger : t.primary;
   const bg = filled ? t.primary : ghost || danger ? 'transparent' : t.primarySoft;
   return (
-    <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} onPress={onPress} disabled={disabled} hitSlop={4}
+    <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: !!disabled }} onPress={onPress} disabled={disabled} hitSlop={4}
       style={(st) => ({ minHeight: 36, paddingHorizontal: t.spacing + 2, borderRadius: Math.max(4, t.radius - 4), justifyContent: 'center', backgroundColor: bg, borderWidth: danger ? 1 : 0, borderColor: t.danger, ...interactive(t, st as PState, disabled) })}>
       <Text style={{ ...txt(t, 14, '600'), color: fg }}>{title}</Text>
     </Pressable>
@@ -152,8 +153,9 @@ export function SmallBtn({ title, onPress, danger, disabled, ghost, filled }: { 
 export function Screen({ children, title, subtitle, right, wide }: { children: ReactNode; title?: string; subtitle?: string; right?: ReactNode; wide?: boolean }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
+  const navTop = navLayout(useWindowDimensions().width, t.nav).position === 'top'; // the top NavBar already pads the inset
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: (title ? insets.top : 0) + 12, paddingBottom: 32, gap: 14, maxWidth: wide ? undefined : 760, width: '100%', alignSelf: 'center' }} keyboardShouldPersistTaps="handled">
+    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: (title && !navTop ? insets.top : 0) + 12, paddingBottom: 32, gap: 14, maxWidth: wide ? undefined : 760, width: '100%', alignSelf: 'center' }} keyboardShouldPersistTaps="handled">
       {title ? (
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
           <View style={{ flexShrink: 1 }}>

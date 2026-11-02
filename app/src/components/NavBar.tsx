@@ -1,5 +1,5 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
-import { Pressable, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 
 import { blockEndMs, blockStartMs, blocksOn, getTz } from '@/lib/domain';
 import { useStore } from '@/lib/store';
@@ -52,9 +52,14 @@ export function NavBar({ state, descriptors, emitter, navigateToTab, insets }: B
       paddingTop: 8 + (position !== 'bottom' ? insets.top : 0), paddingBottom: 8 + (position !== 'top' ? insets.bottom : 0),
       paddingLeft: (full ? 16 : 8) + (position !== 'right' ? insets.left : 0), paddingRight: (full ? 16 : 8) + (position !== 'left' ? insets.right : 0),
     }}>
-      {full ? <View style={{ paddingVertical: 8 }}><H size={22}>Sergeant</H></View> : null}
-      {items}
-      {full ? <SidebarExtras showNow={!onToday} /> : null}
+      {full ? (
+        // Scrolls on short windows so the mode switch stays reachable.
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, gap: 12 }}>
+          <View style={{ paddingVertical: 8 }}><H size={22}>Sergeant</H></View>
+          {items}
+          <SidebarExtras showNow={!onToday} />
+        </ScrollView>
+      ) : items}
     </View>
   );
 }
@@ -75,7 +80,7 @@ function SidebarExtras({ showNow }: { showNow: boolean }) {
   const card = { backgroundColor: t.surface2, borderRadius: t.radius, padding: 12, gap: 4 };
 
   return (
-    <View style={{ flex: 1, gap: 12 }}>
+    <View style={{ flexGrow: 1, gap: 12 }}>
       {showNow ? (
         <View style={card}>
           {current ? (
