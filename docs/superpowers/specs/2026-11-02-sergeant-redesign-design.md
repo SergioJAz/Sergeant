@@ -159,14 +159,34 @@ Layout switches by available width, not device type:
 - Animation and transitions.
 - How the Today side panel and the full sidebar get their data (selectors over the store).
 
-## Open questions for Sergio (from builder check, 2026-11-02; answer before planning)
+## Answers from Sergio (2026-11-02)
 
-Ranked by how much the answer changes the plan.
+Builder-check questions, answered. Sergio's words paraphrased; anything marked *guess* is Claude's reading.
 
-1. **Do Not Disturb with the app closed?** Must DND switch on at the block's start time with the app closed, or only when you tap Start / open the block? Which level: total silence, alarms only, or priority with Sergeant allowed through? (App closed = native alarm-triggered code in phase 5, not a small plugin.)
-2. **Break: keep the day's order, or let the scheduler reshuffle?** The scheduler re-places blocks by priority, so order is not kept today. And does work that slides past stop-work time go to tomorrow?
-3. **Hand-placed things on break / day off / limit:** errands with a picked time and manually placed or locked blocks are untouchable to the scheduler now. Should they move too?
-4. **Side-project hours:** preferred time of day and block length? Do unmet hours carry over to next week? Does progress count logged time or finished blocks?
-5. **Existing Today to-do list** (replaced milestones in the last release): do errands replace it and migrate its data, or do both stay?
-6. **Errands that don't fit:** "anytime today" with no free gap, or undone at day's end: roll to tomorrow, warn, or squeeze something out?
-7. **Custom themes across devices:** sync them (new table + RLS in phase 1) while the chosen theme stays per device, or keep them on the device only?
+1. **Do Not Disturb with the app closed:** yes. If a block has DND on, it turns on at the block's start even with the app closed.
+   DND is a per-block switch (on by default for study and side-project blocks). Strictness level: *guess* priority mode with Sergeant's own reminders allowed through.
+   Phase 5 therefore needs native alarm-triggered code, not just a config plugin.
+2. **Break ordering:**
+   - Short break (e.g. 1 hour): keep the order of the day if possible; if it no longer fits, let the scheduler reshuffle.
+   - Full-day break (day off): shift the work to the next days. Deadline-bound work gets placed before its deadline
+     (Sergio: he'd have finished deadline work already, so this is the rare case).
+   - *guess:* work that slides past the stop-work time goes to tomorrow, same as the work-limit rule.
+3. **Hand-placed things:** errands with a set time and blocks placed by hand do **not** move on a break, day off or limit.
+   Errands may happen during a break; that's fine.
+4. **Side-project hours** (changes Goal 4):
+   - The app looks at free time and **suggests** side-project blocks there; Sergio accepts a suggestion to add it. Nothing is forced in.
+   - How much it suggests depends on how much free time there is and how many hours he gave that project.
+   - A project is **done when he marks it done**. Coming back to it later = a new project.
+   - Carry-over: *still open*, see below.
+5. **Errands vs. the Today to-do list:** errands go into the same list. An errand either fits alongside the existing to-dos
+   or replaces some of them. *guess:* migrate existing to-do rows as errands with no time, so no data is lost.
+6. **Errands that don't fit:** each errand has a "must be today" switch.
+   - Must be today: it gets a slot even if that bumps other blocks, uni included; bumped blocks are rescheduled, never deleted.
+   - Not urgent: it moves to another day.
+7. **Custom themes sync across devices:** yes. Phase 1 adds a synced table with RLS for custom themes;
+   the currently chosen theme and mode stay per device.
+
+### Still open
+
+- **Carry-over:** if a side project gets fewer hours than he gave it this week, should the missing hours be added
+  to next week's suggestions, or does each week start fresh?
