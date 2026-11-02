@@ -199,9 +199,9 @@ export function H({ children, size = 20 }: { children: ReactNode; size?: number 
   return <Text accessibilityRole="header" style={{ ...txt(t, size, '700'), color: t.text }}>{children}</Text>;
 }
 
-export function T({ children, muted, bold, color, size, center }: { children: ReactNode; muted?: boolean; bold?: boolean; color?: string; size?: number; center?: boolean }) {
+export function T({ children, muted, bold, color, size, center, strike }: { children: ReactNode; muted?: boolean; bold?: boolean; color?: string; size?: number; center?: boolean; strike?: boolean }) {
   const t = useTheme();
-  return <Text style={{ color: color ?? (muted ? t.muted : t.text), ...txt(t, size ?? 15, bold ? '700' : '400'), lineHeight: t.fs(size ?? 15) * 1.35, textAlign: center ? 'center' : undefined }}>{children}</Text>;
+  return <Text style={{ color: color ?? (muted ? t.muted : t.text), ...txt(t, size ?? 15, bold ? '700' : '400'), lineHeight: t.fs(size ?? 15) * 1.35, textAlign: center ? 'center' : undefined, textDecorationLine: strike ? 'line-through' : 'none' }}>{children}</Text>;
 }
 
 export function Pill({ label, color, soft }: { label: string; color?: string; soft?: boolean }) {

@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { removeBlock } from '@/lib/actions';
 import { activeChunks, blockConflicts } from '@/lib/domain';
 import { useStore } from '@/lib/store';
+import { hmToMin, minToHm } from '@/lib/time';
 import type { Block, BlockType } from '@/lib/types';
 import { Banner, Btn, Chips, Field, Row, Sheet, SmallBtn, T, Toggle, useTheme } from '@/lib/ui';
 
@@ -20,13 +21,14 @@ export function textToSubtasks(s: string) {
   });
 }
 
-export function BlockEditor({ block, date, onClose }: { block: Block | null; date: string; onClose: () => void }) {
+// slot (HH:MM) pre-fills a new block from a free gap: its start, ending at the gap end or after 50 min, whichever is first.
+export function BlockEditor({ block, date, slot, onClose }: { block: Block | null; date: string; slot?: { start: string; end: string }; onClose: () => void }) {
   const { data, write } = useStore();
   const t = useTheme();
   const [f, setF] = useState({
     date: block?.date ?? date,
-    start: block?.start_time.slice(0, 5) ?? '09:00',
-    end: block?.end_time.slice(0, 5) ?? '09:50',
+    start: block?.start_time.slice(0, 5) ?? slot?.start ?? '09:00',
+    end: block?.end_time.slice(0, 5) ?? (slot ? minToHm(Math.min(hmToMin(slot.end), hmToMin(slot.start) + 50)) : '09:50'),
     course_id: block?.course_id ?? null,
     item_id: block?.item_id ?? null,
     chunk_ids: block?.chunk_ids ?? [],
