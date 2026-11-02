@@ -1,3 +1,4 @@
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
@@ -5,6 +6,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { useNotificationSync } from '@/lib/notify';
 import { StoreProvider } from '@/lib/store';
+import { FONT_ASSETS } from '@/theme/fontAssets';
 import { ThemeProvider, useIsDark, useTheme, useThemePref } from '@/lib/ui';
 import SignInScreen from './sign-in';
 
@@ -16,10 +18,11 @@ function NotificationSync() {
 function AuthedApp() {
   const { session, loading } = useAuth();
   const { ready } = useThemePref();
+  const [fontsLoaded, fontError] = useFonts(FONT_ASSETS);
   const t = useTheme();
   const isDark = useIsDark();
 
-  if (loading || !ready) {
+  if (loading || !ready || !(fontsLoaded || fontError)) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: t.bg }}>
         <ActivityIndicator accessibilityLabel="Loading" color={t.primary} />
