@@ -1,0 +1,22 @@
+// Only regular+bold per family are bundled (subpath imports skip the other weights).
+export const FONT_ASSETS: Record<string, number> = {
+  Nunito_400Regular: require('@expo-google-fonts/nunito/400Regular/Nunito_400Regular.ttf'),
+  Nunito_700Bold: require('@expo-google-fonts/nunito/700Bold/Nunito_700Bold.ttf'),
+  Lora_400Regular: require('@expo-google-fonts/lora/400Regular/Lora_400Regular.ttf'),
+  Lora_700Bold: require('@expo-google-fonts/lora/700Bold/Lora_700Bold.ttf'),
+  JetBrainsMono_400Regular: require('@expo-google-fonts/jetbrains-mono/400Regular/JetBrainsMono_400Regular.ttf'),
+  JetBrainsMono_700Bold: require('@expo-google-fonts/jetbrains-mono/700Bold/JetBrainsMono_700Bold.ttf'),
+  SourceSans3_400Regular: require('@expo-google-fonts/source-sans-3/400Regular/SourceSans3_400Regular.ttf'),
+  SourceSans3_700Bold: require('@expo-google-fonts/source-sans-3/700Bold/SourceSans3_700Bold.ttf'),
+  ComicNeue_400Regular: require('@expo-google-fonts/comic-neue/400Regular/ComicNeue_400Regular.ttf'),
+  ComicNeue_700Bold: require('@expo-google-fonts/comic-neue/700Bold/ComicNeue_700Bold.ttf'),
+  CourierPrime_400Regular: require('@expo-google-fonts/courier-prime/400Regular/CourierPrime_400Regular.ttf'),
+  CourierPrime_700Bold: require('@expo-google-fonts/courier-prime/700Bold/CourierPrime_700Bold.ttf'),
+  Lexend_400Regular: require('@expo-google-fonts/lexend/400Regular/Lexend_400Regular.ttf'),
+  Lexend_700Bold: require('@expo-google-fonts/lexend/700Bold/Lexend_700Bold.ttf'),
+  EBGaramond_400Regular: require('@expo-google-fonts/eb-garamond/400Regular/EBGaramond_400Regular.ttf'),
+  EBGaramond_700Bold: require('@expo-google-fonts/eb-garamond/700Bold/EBGaramond_700Bold.ttf'),
+  Caveat_400Regular: require('@expo-google-fonts/caveat/400Regular/Caveat_400Regular.ttf'),
+  Caveat_700Bold: require('@expo-google-fonts/caveat/700Bold/Caveat_700Bold.ttf'),
+  Anton_400Regular: require('@expo-google-fonts/anton/400Regular/Anton_400Regular.ttf'),
+};

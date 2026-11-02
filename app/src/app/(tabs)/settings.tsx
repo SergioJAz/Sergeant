@@ -2,6 +2,9 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
+import { useThemeSections } from '@/components/appearance/ThemeSettings';
+import { LayoutSection, NavSection, TextSection } from '@/components/appearance/LayoutSettings';
+import { Columns } from '@/components/Columns';
 import { SyncStatus } from '@/components/SyncStatus';
 import { useAuth } from '@/lib/auth';
 import { DEFAULT_CONFIG, getConfig, getTz, timerElapsed } from '@/lib/domain';
@@ -10,7 +13,7 @@ import { requestPermission, useNotifyState } from '@/lib/notify';
 import { useStore, type WriteInput } from '@/lib/store';
 import { WEEKDAYS } from '@/lib/time';
 import type { Conflict, FixedEvent, Oneoff } from '@/lib/types';
-import { Banner, Btn, Card, Chips, Field, H, Row, Screen, SmallBtn, T, Toggle, useTheme, useThemePref, type ThemePref } from '@/lib/ui';
+import { Banner, Btn, Card, Chips, Field, H, Row, Screen, SmallBtn, T, Toggle, useTheme } from '@/lib/ui';
 
 const HM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -19,7 +22,6 @@ export default function SettingsScreen() {
   const { data, write, queue, sync, dismissOp, clearQueue, status } = useStore();
   const t = useTheme();
   const notify = useNotifyState();
-  const themePref = useThemePref();
   const cfg = getConfig(data);
   const settings = data.settings[0];
   const [error, setError] = useState<string | null>(null);
@@ -78,132 +80,133 @@ export default function SettingsScreen() {
     setError((await signOut()).error);
   }
 
+  const themeSections = useThemeSections(saveConfig);
   const openConflicts = data.sync_conflicts.filter((c) => !c.resolved_at);
   const problemOps = queue.filter((o) => o.state === 'failed' || o.state === 'rejected' || o.state === 'conflict');
 
   return (
-    <Screen subtitle="Preferences" title="Settings" right={<SyncStatus />}>
-      <Card>
-        <H size={17}>Appearance</H>
-        <Chips options={[{ value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]} value={themePref.pref} onChange={(v) => themePref.setPref(v as ThemePref)} />
-        <T muted size={13}>System follows your phone or browser setting. Saved on this device.</T>
-      </Card>
-      <Row wrap>
-        <SmallBtn title="Import / Export" onPress={() => router.push('/io')} />
-        <SmallBtn title="Archive" onPress={() => router.push('/archive')} />
-        <SmallBtn title="Rebalance" onPress={() => router.push('/plan')} />
-      </Row>
-
-      <Card>
-        <H size={17}>Sync</H>
-        <T muted>{queue.length} ops on this device. Last sync: {status.lastSync ? new Date(status.lastSync).toLocaleString() : 'never'}{status.error ? `. Last error: ${status.error}` : ''}</T>
-        <SmallBtn title="Sync now" onPress={() => void sync()} />
-        {problemOps.map((o) => (
-          <Row key={o.op_id} wrap style={{ justifyContent: 'space-between' }}>
-            <T size={13} color={o.state === 'failed' ? t.muted : t.danger}>{o.state}: {o.kind} {o.entity}{o.error ? ` (${o.error})` : ''}</T>
-            {o.state !== 'failed' ? <SmallBtn title="Dismiss" onPress={() => void dismissOp(o.op_id)} /> : null}
-          </Row>
-        ))}
-      </Card>
-
-      {openConflicts.length ? (
-        <Card>
-          <H size={17}>Conflicts</H>
-          <T muted size={13}>Progress and timer writes from two places disagreed. Nothing was overwritten; pick what stays.</T>
-          {openConflicts.map((c) => (
-            <View key={c.id} style={{ gap: 4 }}>
-              <T>{c.entity} {c.row_id?.slice(0, 8)}: yours {JSON.stringify(c.client_payload).slice(0, 120)}</T>
-              {c.server_row ? <T muted size={13}>server {JSON.stringify(c.server_row).slice(0, 120)}</T> : null}
-              <Row wrap>
-                {c.entity === 'active_timer' ? (
-                  <>
-                    <SmallBtn title="Keep as separate log" onPress={() => void resolve(c, 'keep_as_log')} />
-                    <SmallBtn danger title="Discard" onPress={() => void resolve(c, 'discard')} />
-                  </>
-                ) : (
-                  <>
-                    <SmallBtn title="Keep mine" onPress={() => void resolve(c, 'keep_mine')} />
-                    <SmallBtn title="Keep server" onPress={() => void resolve(c, 'keep_server')} />
-                  </>
-                )}
-              </Row>
-            </View>
-          ))}
-        </Card>
-      ) : null}
-
-      <Card>
-        <H size={17}>Reminders</H>
-        {notify.permission === 'unsupported' ? (
-          <T muted>Web has no reminders in v1. Use the Android app for notifications.</T>
-        ) : (
-          <>
-            <T>Permission: {notify.permission}{notify.permission !== 'granted' ? ' (reminders off)' : ''}</T>
-            {notify.permission !== 'granted' ? <SmallBtn title="Allow notifications" onPress={() => void requestPermission()} /> : null}
-            <T muted>
-              {notify.scheduledThrough ? `Reminders scheduled through ${new Date(notify.scheduledThrough).toLocaleString()} (${notify.count} queued)` : 'Nothing scheduled yet.'}
-              {notify.scheduledAt && Date.now() - Date.parse(notify.scheduledAt) > 86_400_000 ? ` Stale: last scheduled ${new Date(notify.scheduledAt).toLocaleString()}. Open the app to refresh.` : ''}
-            </T>
-          </>
-        )}
-        {(['block_start', 'block_end', 'break_end', 'summary', 'deadline', 'nag'] as const).map((k) => (
-          <Toggle key={k} label={{ block_start: 'Block start', block_end: 'Block end', break_end: 'Break end', summary: 'Morning summary', deadline: 'Deadline warnings (7/3/1 days)', nag: 'Nag 10 min after unticked block' }[k]}
-            value={cfg.notify[k]} onChange={(v) => void saveConfig({ notify: { ...cfg.notify, [k]: v } })} />
-        ))}
-        <T muted size={13}>Quiet: after hard stop, before wake, during classes and sport. Alerts for a timer you started always ring.</T>
-      </Card>
-
-      <Card>
-        <H size={17}>Planning rules</H>
-        <Field label="Timezone" value={r.timezone} onChange={(v) => setR({ ...r, timezone: v })} />
-        <Row wrap>
-          <Field label="Wake" value={r.wake} onChange={(v) => setR({ ...r, wake: v })} />
-          <Field label="Hard stop" value={r.hard_stop} onChange={(v) => setR({ ...r, hard_stop: v })} />
-          <Field label="Sunday off from" value={r.sunday_off_from} onChange={(v) => setR({ ...r, sunday_off_from: v })} />
-        </Row>
-        <Row wrap>
-          <Field label="Study min" value={r.study} onChange={(v) => setR({ ...r, study: v })} keyboard="numeric" />
-          <Field label="Break min" value={r.brk} onChange={(v) => setR({ ...r, brk: v })} keyboard="numeric" />
-          <Field label="Long break min" value={r.long} onChange={(v) => setR({ ...r, long: v })} keyboard="numeric" />
-          <Field label="Long break every N" value={r.every} onChange={(v) => setR({ ...r, every: v })} keyboard="numeric" />
-        </Row>
-        <Row wrap>
-          <Field label="Review start" value={r.review_start} onChange={(v) => setR({ ...r, review_start: v })} />
-          <Field label="Review end" value={r.review_end} onChange={(v) => setR({ ...r, review_end: v })} />
-          <Field label="Lunch start" value={r.lunch_start} onChange={(v) => setR({ ...r, lunch_start: v })} />
-          <Field label="Lunch end" value={r.lunch_end} onChange={(v) => setR({ ...r, lunch_end: v })} />
-        </Row>
-        <Row wrap>
-          <Field label="Switch subject after N blocks" value={r.switch_after} onChange={(v) => setR({ ...r, switch_after: v })} keyboard="numeric" />
-          <Field label="Rest after exam (min)" value={r.rest} onChange={(v) => setR({ ...r, rest: v })} keyboard="numeric" />
-          <Field label="Auto-fill days" value={r.horizon} onChange={(v) => setR({ ...r, horizon: v })} keyboard="numeric" />
-        </Row>
-        <Btn title="Save rules" onPress={saveRules} />
-        <SmallBtn title="Reset to defaults" onPress={() => setR(toForm(DEFAULT_CONFIG, getTz(data)))} />
-        {saved ? <T color={t.ok}>{saved}</T> : null}
-      </Card>
-
-      <FixedEditor />
-      <OneoffEditor />
-
-      <Card>
-        <H size={17}>Account</H>
-        {session?.user.email ? <T muted>Signed in as {session.user.email}</T> : null}
-        {!logoutAsk ? (
-          <Btn secondary title="Sign out" onPress={() => (queue.length ? setLogoutAsk(true) : void doSignOut())} />
-        ) : (
-          <Banner>
-            <T bold>{queue.length} changes are only on this device.</T>
+    <Screen wide subtitle="Preferences" title="Settings" right={<SyncStatus />}>
+      <Columns
+        plan={{ 2: [[0, 1, 2, 4, 6, 7, 12], [3, 5, 8, 9, 10, 11, 13]], 3: [[0, 1, 2, 7, 12], [3, 4, 8, 13], [5, 6, 9, 10, 11]] }}
+        sections={[
+          ...themeSections,
+          <TextSection key="text" />,
+          <LayoutSection key="layout" />,
+          <NavSection key="nav" />,
+          <Card key="notify">
+            <H size={17}>Reminders</H>
+            {notify.permission === 'unsupported' ? (
+              <T muted>Web has no reminders in v1. Use the Android app for notifications.</T>
+            ) : (
+              <>
+                <T>Permission: {notify.permission}{notify.permission !== 'granted' ? ' (reminders off)' : ''}</T>
+                {notify.permission !== 'granted' ? <SmallBtn title="Allow notifications" onPress={() => void requestPermission()} /> : null}
+                <T muted>
+                  {notify.scheduledThrough ? `Reminders scheduled through ${new Date(notify.scheduledThrough).toLocaleString()} (${notify.count} queued)` : 'Nothing scheduled yet.'}
+                  {notify.scheduledAt && Date.now() - Date.parse(notify.scheduledAt) > 86_400_000 ? ` Stale: last scheduled ${new Date(notify.scheduledAt).toLocaleString()}. Open the app to refresh.` : ''}
+                </T>
+              </>
+            )}
+            {(['block_start', 'block_end', 'break_end', 'summary', 'deadline', 'nag'] as const).map((k) => (
+              <Toggle key={k} label={{ block_start: 'Block start', block_end: 'Block end', break_end: 'Break end', summary: 'Morning summary', deadline: 'Deadline warnings (7/3/1 days)', nag: 'Nag 10 min after unticked block' }[k]}
+                value={cfg.notify[k]} onChange={(v) => void saveConfig({ notify: { ...cfg.notify, [k]: v } })} />
+            ))}
+            <T muted size={13}>Quiet: after hard stop, before wake, during classes and sport. Alerts for a timer you started always ring.</T>
+          </Card>,
+          <Card key="rules">
+            <H size={17}>Planning rules</H>
+            <Field label="Timezone" value={r.timezone} onChange={(v) => setR({ ...r, timezone: v })} />
             <Row wrap>
-              <SmallBtn title="Sync now" onPress={() => void sync()} />
-              <SmallBtn title="Export queue to file" onPress={() => void saveFile('sergeant-queue.json', JSON.stringify(queue, null, 2), 'application/json')} />
-              <SmallBtn title="Cancel" onPress={() => setLogoutAsk(false)} />
+              <Field label="Wake" value={r.wake} onChange={(v) => setR({ ...r, wake: v })} />
+              <Field label="Hard stop" value={r.hard_stop} onChange={(v) => setR({ ...r, hard_stop: v })} />
+              <Field label="Sunday off from" value={r.sunday_off_from} onChange={(v) => setR({ ...r, sunday_off_from: v })} />
             </Row>
-            <Field label='Type "discard" to drop them and sign out' value={typed} onChange={setTyped} />
-            <SmallBtn danger title="Discard and sign out" disabled={typed !== 'discard'} onPress={async () => { await clearQueue(); await doSignOut(); }} />
-          </Banner>
-        )}
-      </Card>
+            <Row wrap>
+              <Field label="Study min" value={r.study} onChange={(v) => setR({ ...r, study: v })} keyboard="numeric" />
+              <Field label="Break min" value={r.brk} onChange={(v) => setR({ ...r, brk: v })} keyboard="numeric" />
+              <Field label="Long break min" value={r.long} onChange={(v) => setR({ ...r, long: v })} keyboard="numeric" />
+              <Field label="Long break every N" value={r.every} onChange={(v) => setR({ ...r, every: v })} keyboard="numeric" />
+            </Row>
+            <Row wrap>
+              <Field label="Review start" value={r.review_start} onChange={(v) => setR({ ...r, review_start: v })} />
+              <Field label="Review end" value={r.review_end} onChange={(v) => setR({ ...r, review_end: v })} />
+              <Field label="Lunch start" value={r.lunch_start} onChange={(v) => setR({ ...r, lunch_start: v })} />
+              <Field label="Lunch end" value={r.lunch_end} onChange={(v) => setR({ ...r, lunch_end: v })} />
+            </Row>
+            <Row wrap>
+              <Field label="Switch subject after N blocks" value={r.switch_after} onChange={(v) => setR({ ...r, switch_after: v })} keyboard="numeric" />
+              <Field label="Rest after exam (min)" value={r.rest} onChange={(v) => setR({ ...r, rest: v })} keyboard="numeric" />
+              <Field label="Auto-fill days" value={r.horizon} onChange={(v) => setR({ ...r, horizon: v })} keyboard="numeric" />
+            </Row>
+            <Btn title="Save rules" onPress={saveRules} />
+            <SmallBtn title="Reset to defaults" onPress={() => setR(toForm(DEFAULT_CONFIG, getTz(data)))} />
+            {saved ? <T color={t.ok}>{saved}</T> : null}
+          </Card>,
+          <FixedEditor key="fixed" />,
+          <OneoffEditor key="oneoff" />,
+          <View key="sync" style={{ gap: 16 }}>
+            <Card>
+              <H size={17}>Sync</H>
+              <T muted>{queue.length} ops on this device. Last sync: {status.lastSync ? new Date(status.lastSync).toLocaleString() : 'never'}{status.error ? `. Last error: ${status.error}` : ''}</T>
+              <SmallBtn title="Sync now" onPress={() => void sync()} />
+              {problemOps.map((o) => (
+                <Row key={o.op_id} wrap style={{ justifyContent: 'space-between' }}>
+                  <T size={13} color={o.state === 'failed' ? t.muted : t.danger}>{o.state}: {o.kind} {o.entity}{o.error ? ` (${o.error})` : ''}</T>
+                  {o.state !== 'failed' ? <SmallBtn title="Dismiss" onPress={() => void dismissOp(o.op_id)} /> : null}
+                </Row>
+              ))}
+            </Card>
+            {openConflicts.length ? (
+              <Card>
+                <H size={17}>Conflicts</H>
+                <T muted size={13}>Progress and timer writes from two places disagreed. Nothing was overwritten; pick what stays.</T>
+                {openConflicts.map((c) => (
+                  <View key={c.id} style={{ gap: 4 }}>
+                    <T>{c.entity} {c.row_id?.slice(0, 8)}: yours {JSON.stringify(c.client_payload).slice(0, 120)}</T>
+                    {c.server_row ? <T muted size={13}>server {JSON.stringify(c.server_row).slice(0, 120)}</T> : null}
+                    <Row wrap>
+                      {c.entity === 'active_timer' ? (
+                        <>
+                          <SmallBtn title="Keep as separate log" onPress={() => void resolve(c, 'keep_as_log')} />
+                          <SmallBtn danger title="Discard" onPress={() => void resolve(c, 'discard')} />
+                        </>
+                      ) : (
+                        <>
+                          <SmallBtn title="Keep mine" onPress={() => void resolve(c, 'keep_mine')} />
+                          <SmallBtn title="Keep server" onPress={() => void resolve(c, 'keep_server')} />
+                        </>
+                      )}
+                    </Row>
+                  </View>
+                ))}
+              </Card>
+            ) : null}
+          </View>,
+          <Row key="tools" wrap>
+            <SmallBtn title="Import / Export" onPress={() => router.push('/io')} />
+            <SmallBtn title="Archive" onPress={() => router.push('/archive')} />
+            <SmallBtn title="Rebalance" onPress={() => router.push('/plan')} />
+          </Row>,
+          <Card key="account">
+            <H size={17}>Account</H>
+            {session?.user.email ? <T muted>Signed in as {session.user.email}</T> : null}
+            {!logoutAsk ? (
+              <Btn secondary title="Sign out" onPress={() => (queue.length ? setLogoutAsk(true) : void doSignOut())} />
+            ) : (
+              <Banner>
+                <T bold>{queue.length} changes are only on this device.</T>
+                <Row wrap>
+                  <SmallBtn title="Sync now" onPress={() => void sync()} />
+                  <SmallBtn title="Export queue to file" onPress={() => void saveFile('sergeant-queue.json', JSON.stringify(queue, null, 2), 'application/json')} />
+                  <SmallBtn title="Cancel" onPress={() => setLogoutAsk(false)} />
+                </Row>
+                <Field label='Type "discard" to drop them and sign out' value={typed} onChange={setTyped} />
+                <SmallBtn danger title="Discard and sign out" disabled={typed !== 'discard'} onPress={async () => { await clearQueue(); await doSignOut(); }} />
+              </Banner>
+            )}
+          </Card>,
+        ]}
+      />
       {error ? <Text accessibilityRole="alert" style={{ color: t.danger, fontWeight: '600' }}>{error}</Text> : null}
     </Screen>
   );
