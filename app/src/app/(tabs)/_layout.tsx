@@ -1,8 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router/js-tabs';
-import type { ColorValue } from 'react-native';
+import { useWindowDimensions, type ColorValue } from 'react-native';
 
+import { NavBar } from '@/components/NavBar';
 import { useTheme } from '@/lib/ui';
+import { navLayout } from '@/theme/layout';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 // Filled when selected, outline otherwise, so the active tab is not shown by color alone.
@@ -12,15 +14,14 @@ const icon = (name: string) => ({ color, focused, size }: { color: ColorValue; f
 
 export default function TabsLayout() {
   const t = useTheme();
+  const nl = navLayout(useWindowDimensions().width, t.nav);
   return (
     <Tabs
+      tabBar={(p) => <NavBar {...p} />}
       screenOptions={{
         headerShown: false,
         sceneStyle: { backgroundColor: t.bg },
-        tabBarStyle: { backgroundColor: t.surface, borderTopColor: t.line },
-        tabBarActiveTintColor: t.primary,
-        tabBarInactiveTintColor: t.muted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarPosition: nl.position,
       }}>
       <Tabs.Screen name="index" options={{ tabBarIcon: icon('today'), title: 'Today' }} />
       <Tabs.Screen name="week" options={{ tabBarIcon: icon('calendar'), title: 'Week' }} />
