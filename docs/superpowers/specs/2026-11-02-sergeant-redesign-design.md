@@ -177,7 +177,7 @@ Builder-check questions, answered. Sergio's words paraphrased; anything marked *
    - The app looks at free time and **suggests** side-project blocks there; Sergio accepts a suggestion to add it. Nothing is forced in.
    - How much it suggests depends on how much free time there is and how many hours he gave that project.
    - A project is **done when he marks it done**. Coming back to it later = a new project.
-   - Carry-over: *still open*, see below.
+   - No carry-over: each week starts fresh. Hours not used this week are not added to next week's suggestions.
 5. **Errands vs. the Today to-do list:** errands go into the same list. An errand either fits alongside the existing to-dos
    or replaces some of them. *guess:* migrate existing to-do rows as errands with no time, so no data is lost.
 6. **Errands that don't fit:** each errand has a "must be today" switch.
@@ -185,8 +185,3 @@ Builder-check questions, answered. Sergio's words paraphrased; anything marked *
    - Not urgent: it moves to another day.
 7. **Custom themes sync across devices:** yes. Phase 1 adds a synced table with RLS for custom themes;
    the currently chosen theme and mode stay per device.
-
-### Still open
-
-- **Carry-over:** if a side project gets fewer hours than he gave it this week, should the missing hours be added
-  to next week's suggestions, or does each week start fresh?
