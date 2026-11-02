@@ -1,17 +1,25 @@
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { useNotificationSync } from '@/lib/notify';
-import { StoreProvider } from '@/lib/store';
+import { StoreProvider, useStore } from '@/lib/store';
+import { customThemesFrom } from '@/theme/appearance';
 import { FONT_ASSETS } from '@/theme/fontAssets';
-import { ThemeProvider, useIsDark, useTheme, useThemePref } from '@/lib/ui';
+import { setCustomThemes, ThemeProvider, useIsDark, useTheme, useThemePref } from '@/lib/ui';
 import SignInScreen from './sign-in';
 
 function NotificationSync() {
   useNotificationSync();
+  return null;
+}
+
+function CustomThemeBridge() {
+  const config = useStore().data.settings[0]?.config;
+  useEffect(() => setCustomThemes(customThemesFrom(config)), [config]);
   return null;
 }
 
@@ -44,6 +52,7 @@ function AuthedApp() {
     <StoreProvider>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <NotificationSync />
+      <CustomThemeBridge />
       <Stack screenOptions={{ headerStyle: { backgroundColor: t.bg }, headerTintColor: t.text, headerTitleStyle: { fontWeight: '700' }, headerShadowVisible: false, contentStyle: { backgroundColor: t.bg } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
