@@ -18,6 +18,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
+      "permissions": ["android.permission.USE_EXACT_ALARM"],
       "package": "com.sergioaz.sergeant"
     },
     "web": {
@@ -40,6 +41,16 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "773e98b8-8c65-40c2-859e-9e53cc25c197"
+      }
     }
   }
 }

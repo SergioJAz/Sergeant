@@ -3,3 +3,4 @@
 .base-ast-cache/
 .claude/
 node_modules/
+.superpowers/
