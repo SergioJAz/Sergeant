@@ -1,11 +1,13 @@
 /* Generated worker inputs are replaced by build-pwa.mjs. */
-const CACHE_PREFIX = 'sergeant-public-';
+const BASE = __BUILD_BASE__;
+const CACHE_PREFIX = 'sergeant-public-' + encodeURIComponent(BASE || '/') + '-';
 const CACHE = CACHE_PREFIX + '__BUILD_VERSION__';
 const FILES = __BUILD_FILES__;
 const DIGESTS = __BUILD_DIGESTS__;
 const ROUTES = new Set(__BUILD_ROUTES__);
 const PUBLIC = new Set(FILES);
 const origin = self.location.origin;
+const shell = `${BASE}/index.html`;
 const usable = (response, url) => response.ok && !response.redirected && response.url === url;
 
 self.addEventListener('install', (event) => {
@@ -14,7 +16,7 @@ self.addEventListener('install', (event) => {
     const cache = await caches.open(CACHE);
     await Promise.all(FILES.map(async (path) => {
       // Static hosts redirect /index.html to /. Fetch the canonical URL and retain the stable cache key.
-      const url = new URL(path === '/index.html' ? '/' : path, origin).href;
+      const url = new URL(path === shell ? `${BASE}/` : path, origin).href;
       const response = await fetch(url, { cache: 'reload', credentials: 'same-origin', redirect: 'error' });
       if (!usable(response, url)) throw new Error(`Cannot cache public asset ${path}`);
       // Hosting gates can return a login page with status 200. Only exact exported bytes enter the cache.
@@ -38,10 +40,10 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);
   // Supabase, authentication, API calls, and writes bypass the worker entirely.
-  if (request.method !== 'GET' || url.origin !== origin || url.search) return;
+  if (request.method !== 'GET' || url.origin !== origin || url.search || !url.pathname.startsWith(`${BASE}/`)) return;
   const navigation = request.mode === 'navigate';
   const route = url.pathname.replace(/\/$/, '') || '/';
-  const knownRoute = ROUTES.has(route) || /^\/(course|item)\/[^/]+\/?$/.test(url.pathname);
+  const knownRoute = ROUTES.has(route) || ROUTES.has(`${route}/`) || /^\/(course|item)\/[^/]+\/?$/.test(url.pathname.slice(BASE.length));
   if (navigation && knownRoute) {
     event.respondWith((async () => {
       try {
@@ -49,7 +51,7 @@ self.addEventListener('fetch', (event) => {
         return await fetch(request);
       } catch {
         const cache = await caches.open(CACHE);
-        return cache.match(new URL('/index.html', origin).href);
+        return cache.match(new URL(shell, origin).href);
       }
     })());
   } else if (!navigation && PUBLIC.has(url.pathname) && !url.pathname.endsWith('.html')) {

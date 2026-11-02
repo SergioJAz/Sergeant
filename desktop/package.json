@@ -1,0 +1,41 @@
+{
+  "name": "sergeant-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sergeant Windows desktop application",
+  "author": "SergioJAz",
+  "license": "UNLICENSED",
+  "main": "main.cjs",
+  "scripts": {
+    "prepare:assets": "node scripts/prepare-assets.mjs",
+    "start": "electron .",
+    "test": "node --test *.test.cjs",
+    "smoke:packaged": "node scripts/smoke-built.mjs",
+    "build:win": "npm run prepare:assets && electron-builder --win nsis portable --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "45.2.1",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "com.sergioaz.sergeant.desktop",
+    "productName": "Sergeant",
+    "asar": true,
+    "directories": { "output": "release", "buildResources": "assets" },
+    "files": ["main.cjs", "resolve-asset.cjs", "web/**/*", "assets/icon.png", "package.json"],
+    "win": {
+      "icon": "assets/icon.png",
+      "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }]
+    },
+    "nsis": {
+      "artifactName": "Sergeant-Setup-${version}.exe",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": { "artifactName": "Sergeant-Portable-${version}.exe" }
+  }
+}

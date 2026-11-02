@@ -1,15 +1,14 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router/js-tabs';
 import { useWindowDimensions, type ColorValue } from 'react-native';
 
 import { NavBar } from '@/components/NavBar';
+import { TabIcon, type TabIconProps } from '@/components/TabIcon';
 import { useTheme } from '@/lib/ui';
 import { navLayout } from '@/theme/layout';
 
-type IconName = React.ComponentProps<typeof Ionicons>['name'];
-// Filled when selected, outline otherwise, so the active tab is not shown by color alone.
-const icon = (name: string) => ({ color, focused, size }: { color: ColorValue; focused: boolean; size: number }) => (
-  <Ionicons name={(focused ? name : `${name}-outline`) as IconName} color={color as string} size={size} />
+// Each platform renders its icon without changing the tab's selected state or label.
+const icon = (name: TabIconProps['name']) => ({ color, focused, size }: { color: ColorValue; focused: boolean; size: number }) => (
+  <TabIcon name={name} focused={focused} color={color as string} size={size} />
 );
 
 export default function TabsLayout() {
