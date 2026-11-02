@@ -148,11 +148,12 @@ export function SmallBtn({ title, onPress, danger, disabled, ghost, filled }: { 
   );
 }
 
-export function Screen({ children, title, subtitle, right }: { children: ReactNode; title?: string; subtitle?: string; right?: ReactNode }) {
+// wide: no 760px cap, for screens that lay out their own columns.
+export function Screen({ children, title, subtitle, right, wide }: { children: ReactNode; title?: string; subtitle?: string; right?: ReactNode; wide?: boolean }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: (title ? insets.top : 0) + 12, paddingBottom: 32, gap: 14, maxWidth: 760, width: '100%', alignSelf: 'center' }} keyboardShouldPersistTaps="handled">
+    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: (title ? insets.top : 0) + 12, paddingBottom: 32, gap: 14, maxWidth: wide ? undefined : 760, width: '100%', alignSelf: 'center' }} keyboardShouldPersistTaps="handled">
       {title ? (
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
           <View style={{ flexShrink: 1 }}>
