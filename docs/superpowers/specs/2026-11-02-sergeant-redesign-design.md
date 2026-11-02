@@ -30,7 +30,7 @@ including blocking other apps' notifications while he works.
 1. Today shows the day's start and end time, a "now" card, and the rest of the day as a timeline.
 2. Four kinds of things live in the schedule: **uni**, **side projects**, **training**, **errands**. Each has a color and a marker.
 3. Fixed weekly anchors repeat by themselves (Muay Thai Mon/Wed/Fri 19:00 to 20:30 plus drive time; gym Tue/Thu/Sat at a different time each day).
-4. Side projects get a **weekly hour target**; the existing scheduler places those hours into free time.
+4. Side projects get the hours Sergio gives them; the app **suggests** blocks in free time and he accepts them (see Answers 4).
 5. Errands are quick: name, length, and "anytime today" / "right now" / "pick a time". Anytime goes into the first free gap that fits.
 6. Take a break now, take the day off, and a daily work limit that can be overridden for today.
 7. Focus blocks (study and side project) turn on Android Do Not Disturb and turn it off at the end.
