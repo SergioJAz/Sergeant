@@ -1,6 +1,7 @@
 // Write helpers that turn user actions into ops (timer Contracts 2, progress Contracts 3, lifecycle 5).
 import { blockMinutes, examOneoff, getTz, timerElapsed } from './domain';
 import { uuid, type WriteInput } from './store';
+import { localDate } from './time';
 import type { ActiveTimer, Block, Data, Item } from './types';
 
 type Write = (ops: WriteInput[]) => Promise<string[]>;
@@ -142,13 +143,16 @@ export function archiveCourse(write: Write, data: Data, courseId: string, archiv
     if (archive && oo) ops.push({ entity: 'oneoff_blocks', kind: 'delete', row_id: oo.id });
     if (!archive && sameArchive(i)) ops.push(...examOps(data, { ...i, status: 'active' }));
   }
-  if (archive) {
-    const today = new Date().toISOString().slice(0, 10);
-    for (const b of data.blocks) {
-      if (b.course_id === courseId && b.status === 'planned' && b.date >= today) ops.push({ entity: 'blocks', kind: 'update', row_id: b.id, payload: { status: 'skipped', what: `${b.what ?? ''} (course archived)`.trim() } });
-    }
-  }
+  if (archive) ops.push(...skipFutureBlocks(data, (b) => b.course_id === courseId, 'course archived'));
   return write(ops);
+}
+
+// Future planned blocks stop counting once their course or item is archived; history stays.
+function skipFutureBlocks(data: Data, match: (b: Block) => boolean, why: string): WriteInput[] {
+  const today = localDate(Date.now(), getTz(data));
+  return data.blocks
+    .filter((b) => match(b) && b.status === 'planned' && b.date >= today && !b.deleted_at)
+    .map((b): WriteInput => ({ entity: 'blocks', kind: 'update', row_id: b.id, payload: { status: 'skipped', what: `${b.what ?? ''} (${why})`.trim() } }));
 }
 
 export function archiveItem(write: Write, data: Data, item: Item, archive: boolean) {
@@ -156,5 +160,6 @@ export function archiveItem(write: Write, data: Data, item: Item, archive: boole
   const ops: WriteInput[] = [{ entity: 'items', kind: 'update', row_id: item.id, payload: { status: archive ? 'archived' : 'active', archived_at: at } }];
   for (const c of data.chunks.filter((c) => c.item_id === item.id && (archive ? !c.archived_at : c.archived_at === item.archived_at))) ops.push({ entity: 'chunks', kind: 'update', row_id: c.id, payload: { archived_at: at } });
   ops.push(...examOps(data, { ...item, status: archive ? 'archived' : 'active' }));
+  if (archive) ops.push(...skipFutureBlocks(data, (b) => b.item_id === item.id, 'item archived'));
   return write(ops);
 }

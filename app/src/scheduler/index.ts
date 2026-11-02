@@ -119,6 +119,7 @@ export type ScheduleInput = {
   blocks: ExistingBlock[];
   horizonDays: number;
   activeBlockId?: string | null; // active timer block is protected (Contracts 9 level 1)
+  ownerId?: string; // block ids are a global primary key; item-less blocks (Review, Rest) need the user in their name
 };
 
 export type ProposedBlock = {
@@ -275,7 +276,8 @@ export function schedule(input: ScheduleInput): ScheduleOutput {
   const warnings: { w: Warning; t: number; item: string; tie: string }[] = [];
   const emit = (s: number, e: number, type: BlockType, what: string, item: Item | null, chunkIds: string[]) => {
     const { date, time } = wall(s, tz);
-    const name = chunkIds.length ? `${item!.id}|${chunkIds.join(',')}|${date}|${time}` : `${type}|${item?.id ?? ''}|${date}|${time}`;
+    const owner = input.ownerId ? `${input.ownerId}|` : '';
+    const name = chunkIds.length ? `${item!.id}|${chunkIds.join(',')}|${date}|${time}` : `${owner}${type}|${item?.id ?? ''}|${date}|${time}`;
     out.push({ s, b: {
       id: uuidv5(name, BLOCK_ID_NAMESPACE),
       date,

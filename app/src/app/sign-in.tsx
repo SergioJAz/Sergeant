@@ -16,6 +16,9 @@ export default function SignInScreen() {
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Editing any field clears the last error, so a fixed typo no longer shows a stale message.
+  const edit = (set: (v: string) => void) => (v: string) => { set(v); setError(null); };
+
   function switchMode() {
     setCreating(!creating);
     setError(null);
@@ -58,7 +61,7 @@ export default function SignInScreen() {
         autoComplete="email"
         keyboardType="email-address"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={edit(setEmail)}
         editable={!busy}
         style={inputStyle}
       />
@@ -70,7 +73,7 @@ export default function SignInScreen() {
         autoComplete={creating ? 'new-password' : 'password'}
         secureTextEntry
         value={password}
-        onChangeText={setPassword}
+        onChangeText={edit(setPassword)}
         editable={!busy}
         style={inputStyle}
       />
@@ -83,7 +86,7 @@ export default function SignInScreen() {
           autoComplete="new-password"
           secureTextEntry
           value={confirm}
-          onChangeText={setConfirm}
+          onChangeText={edit(setConfirm)}
           editable={!busy}
           style={inputStyle}
         />

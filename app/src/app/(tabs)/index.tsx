@@ -107,7 +107,7 @@ export default function TodayScreen() {
               </View>
             );
           })}
-          <Row><SmallBtn ghost title="Let auto-fill reschedule" onPress={() => router.push('/plan')} /></Row>
+          <Row><SmallBtn ghost title="Replan my week" onPress={() => router.push('/plan')} /></Row>
         </Card>
       ) : null}
     </Section>
@@ -127,7 +127,7 @@ export default function TodayScreen() {
           )}
         </View>
       ) : (
-        <Empty title="Nothing planned today" body="Add a block, or let auto-fill plan your week." action={<Row><SmallBtn title="Plan my week" onPress={() => router.push('/plan')} /></Row>} />
+        <Empty title="Nothing planned today" body="Add a block, or let Sergeant plan your week." action={<Row><SmallBtn title="Plan my week" onPress={() => router.push('/plan')} /></Row>} />
       )}
     </Section>
   );

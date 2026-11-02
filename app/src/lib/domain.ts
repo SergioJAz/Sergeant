@@ -68,9 +68,12 @@ export function oneoffsOn(data: Data, date: string): Oneoff[] {
   return data.oneoff_blocks.filter((o) => o.date === date);
 }
 
+// Blocks of an archived course or item leave the schedule unless real work was logged on them.
 export function blocksOn(data: Data, date: string): Block[] {
+  const gone = new Set([...data.courses, ...data.items].filter((x) => x.status === 'archived').map((x) => x.id));
   return data.blocks
     .filter((b) => b.date === date && !b.deleted_at && b.status !== 'moved')
+    .filter((b) => !(gone.has(b.course_id ?? '') || gone.has(b.item_id ?? '')) || b.status === 'done' || b.status === 'partial')
     .sort((a, b) => a.start_time.localeCompare(b.start_time));
 }
 

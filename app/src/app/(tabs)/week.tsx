@@ -54,7 +54,7 @@ export default function WeekScreen() {
     <Screen wide subtitle={`Week of ${dayLabel(monday)}`} title="Week" right={
       <View style={{ gap: 8, alignItems: 'flex-end' }}>
         <T muted size={13}>{fmtDur(weekMin)} planned</T>
-        <Row wrap><SmallBtn ghost title="Stats" onPress={() => router.push('/stats')} /><SmallBtn filled title="Auto-fill" onPress={() => router.push('/plan')} /></Row>
+        <Row wrap><SmallBtn ghost title="Stats" onPress={() => router.push('/stats')} /><SmallBtn filled title="Plan my week" onPress={() => router.push('/plan')} /></Row>
       </View>
     }>
       <Row style={{ justifyContent: 'space-between' }}>

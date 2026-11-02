@@ -136,7 +136,7 @@ export default function SettingsScreen() {
             <Row wrap>
               <Field label="Switch subject after N blocks" value={r.switch_after} onChange={(v) => setR({ ...r, switch_after: v })} keyboard="numeric" />
               <Field label="Rest after exam (min)" value={r.rest} onChange={(v) => setR({ ...r, rest: v })} keyboard="numeric" />
-              <Field label="Auto-fill days" value={r.horizon} onChange={(v) => setR({ ...r, horizon: v })} keyboard="numeric" />
+              <Field label="Days to plan ahead" value={r.horizon} onChange={(v) => setR({ ...r, horizon: v })} keyboard="numeric" />
             </Row>
             <Btn title="Save rules" onPress={saveRules} />
             <SmallBtn title="Reset to defaults" onPress={() => setR(toForm(DEFAULT_CONFIG, getTz(data)))} />
@@ -149,6 +149,9 @@ export default function SettingsScreen() {
               <H size={17}>Sync</H>
               <T muted>{queue.length} ops on this device. Last sync: {status.lastSync ? new Date(status.lastSync).toLocaleString() : 'never'}{status.error ? `. Last error: ${status.error}` : ''}</T>
               <SmallBtn title="Sync now" onPress={() => void sync()} />
+              {problemOps.filter((o) => o.state !== 'failed').length > 1 ? (
+                <SmallBtn title="Dismiss all rejected" onPress={async () => { for (const o of problemOps) if (o.state !== 'failed') await dismissOp(o.op_id); }} />
+              ) : null}
               {problemOps.map((o) => (
                 <Row key={o.op_id} wrap style={{ justifyContent: 'space-between' }}>
                   <T size={13} color={o.state === 'failed' ? t.muted : t.danger}>{o.state}: {o.kind} {o.entity}{o.error ? ` (${o.error})` : ''}</T>
@@ -185,7 +188,7 @@ export default function SettingsScreen() {
           <Row key="tools" wrap>
             <SmallBtn title="Import / Export" onPress={() => router.push('/io')} />
             <SmallBtn title="Archive" onPress={() => router.push('/archive')} />
-            <SmallBtn title="Rebalance" onPress={() => router.push('/plan')} />
+            <SmallBtn title="Plan my week" onPress={() => router.push('/plan')} />
           </Row>,
           <Card key="account">
             <H size={17}>Account</H>

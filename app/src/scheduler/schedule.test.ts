@@ -174,3 +174,13 @@ test('uuidv5 matches node:crypto SHA-1 reference', () => {
   assert.equal(uuidv5('www.example.com', dns), '2ed6657d-e927-568b-95e1-2665a8aea6a2');
   for (const n of ['', 'a', 'x'.repeat(55), 'y'.repeat(56), 'z'.repeat(64), 'naive 1|2|2026-11-02|08:20']) assert.equal(uuidv5(n, dns), ref(n, dns), n);
 });
+
+test('item-less block ids differ per owner; study block ids do not', () => {
+  const f = fixtures.find((x) => schedule(x.input).blocks.some((b) => !b.chunk_ids.length));
+  assert.ok(f, 'a fixture emits an item-less block (Review or Rest)');
+  const a = schedule({ ...f.input, ownerId: 'user-a' }).blocks;
+  const b = schedule({ ...f.input, ownerId: 'user-b' }).blocks;
+  const ids = (xs: ProposedBlock[], withItem: boolean) => xs.filter((x) => x.chunk_ids.length > 0 === withItem).map((x) => x.id);
+  assert.deepEqual(ids(a, true), ids(b, true));
+  for (const id of ids(a, false)) assert.ok(!ids(b, false).includes(id), 'two accounts never share a primary key');
+});

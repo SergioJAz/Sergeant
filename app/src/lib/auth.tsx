@@ -1,7 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
-import { supabase } from './supabase';
+import { supabase, WEB_APP_URL } from './supabase';
 
 type AuthResult = { error: string | null };
 
@@ -36,7 +36,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: error?.message ?? null };
     },
     signUp: async (email, password) => {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: WEB_APP_URL } });
+      // Supabase's built-in mailer allows only a few emails per hour.
+      if (error?.code === 'over_email_send_rate_limit') return { error: 'Too many sign-up emails right now. Try again in an hour.' };
       return { error: error?.message ?? null };
     },
     // Only ends the Supabase session; local data is intentionally left untouched.

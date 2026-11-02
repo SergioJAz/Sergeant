@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable } from 'react-native';
 
+import { useAuth } from '@/lib/auth';
 import { getConfig } from '@/lib/domain';
 import { diffPlan, recheck, runSchedule } from '@/lib/plan';
 import { useStore, type WriteInput } from '@/lib/store';
@@ -10,9 +11,10 @@ import { Banner, Btn, Card, H, Row, Screen, SmallBtn, T, useTheme } from '@/lib/
 
 export default function PlanScreen() {
   const { data, write, status } = useStore();
+  const uid = useAuth().session?.user.id;
   const t = useTheme();
   const [runAt, setRunAt] = useState(Date.now());
-  const out = useMemo(() => runSchedule(data, runAt), [data, runAt]);
+  const out = useMemo(() => runSchedule(data, runAt, uid), [data, runAt, uid]);
   const diff = useMemo(() => diffPlan(data, out), [data, out]);
   const [skipAdd, setSkipAdd] = useState<Set<string>>(new Set());
   const [skipRemove, setSkipRemove] = useState<Set<string>>(new Set());
@@ -36,7 +38,7 @@ export default function PlanScreen() {
       ...adds.map(({ id, ...p }) => ({ entity: 'blocks' as const, kind: 'insert' as const, row_id: id, payload: p })),
     ];
     await write(ops);
-    setMsg(`Applied: ${adds.length} added, ${removes.length} removed.`);
+    setMsg(`Saved: ${adds.length} blocks added, ${removes.length} removed. Open Week to see them.`);
     setSkipAdd(new Set());
     setSkipRemove(new Set());
     setRunAt(Date.now());
@@ -48,10 +50,10 @@ export default function PlanScreen() {
   return (
     <Screen>
       <Row style={{ justifyContent: 'space-between' }} wrap>
-        <H size={22}>Rebalance next {getConfig(data).horizon_days} days</H>
+        <H size={22}>Plan the next {getConfig(data).horizon_days} days</H>
         <SmallBtn title="Back to week" onPress={() => router.push('/week')} />
       </Row>
-      <T muted>Auto-fill only replaces unlocked auto blocks. Locked, Claude, manual and finished blocks stay. Review the changes, untick any you do not want, then apply.</T>
+      <T muted>Sergeant fits study time for your due work into your free slots. Below are the changes it suggests. Tap a row to leave it out, then press Save. Blocks you added, locked or finished are never touched.</T>
       {status.error ? <Banner tone="danger"><T>Rebalance apply needs a connection (last sync failed: {status.error}).</T></Banner> : null}
       {overload.length ? (
         <Banner tone="danger">
@@ -70,7 +72,7 @@ export default function PlanScreen() {
           ))}
         </Banner>
       ) : null}
-      <T>{diff.keep} unchanged, {diff.add.length} to add, {diff.remove.length} to remove.</T>
+      <T>{diff.keep} blocks stay as they are. {adds.length} of {diff.add.length} new blocks and {removes.length} of {diff.remove.length} removals are ticked.</T>
 
       <H>Add</H>
       {diff.add.map((b) => {
@@ -100,7 +102,7 @@ export default function PlanScreen() {
       {!diff.remove.length ? <T muted>Nothing to remove.</T> : null}
 
       {msg ? <T bold color={t.ok}>{msg}</T> : null}
-      <Btn title={bad.size ? `Fix ${bad.size} overlaps first` : 'Apply selected'} disabled={bad.size > 0 || (!adds.length && !removes.length)} onPress={apply} />
+      <Btn title={bad.size ? `Fix ${bad.size} overlaps first` : `Save ${adds.length + removes.length} changes`} disabled={bad.size > 0 || (!adds.length && !removes.length)} onPress={apply} />
       <SmallBtn title="Recompute" onPress={() => setRunAt(Date.now())} />
     </Screen>
   );

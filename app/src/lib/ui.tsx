@@ -94,12 +94,19 @@ export function useIsDark() {
   return useTheme().mode === 'dark';
 }
 
+// Ring only after keyboard use: a tap focuses the button too, and on phones the ring stuck and made buttons look joined.
+let keyboardNav = false;
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  window.addEventListener('keydown', () => { keyboardNav = true; }, true);
+  window.addEventListener('pointerdown', () => { keyboardNav = false; }, true);
+}
+
 // Web hover and keyboard focus ring; native ignores the extra keys.
 export type PState = { pressed: boolean; hovered?: boolean; focused?: boolean };
 export function interactive(t: Theme, st: PState, disabled?: boolean) {
   return {
     opacity: disabled ? 0.45 : st.pressed ? 0.8 : 1,
-    outlineStyle: st.focused ? 'solid' : 'none',
+    outlineStyle: st.focused && keyboardNav && Platform.OS === 'web' ? 'solid' : 'none',
     outlineWidth: 2,
     outlineOffset: 2,
     outlineColor: t.focus,

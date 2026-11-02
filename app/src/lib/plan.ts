@@ -5,7 +5,7 @@ import { doneMin, estMin, getConfig, getTz } from './domain';
 import { hmToMin } from './time';
 import type { Block, Data } from './types';
 
-export function runSchedule(data: Data, nowMs: number): ScheduleOutput {
+export function runSchedule(data: Data, nowMs: number, ownerId?: string): ScheduleOutput {
   const cfg = getConfig(data);
   return schedule({
     now: new Date(nowMs).toISOString(),
@@ -18,6 +18,7 @@ export function runSchedule(data: Data, nowMs: number): ScheduleOutput {
     blocks: data.blocks.filter((b) => !b.deleted_at),
     horizonDays: cfg.horizon_days,
     activeBlockId: data.active_timer[0]?.block_id ?? null,
+    ownerId,
   });
 }
 

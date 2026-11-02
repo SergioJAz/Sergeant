@@ -1,5 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
+import { Platform } from 'react-native';
+
+// Confirmation links open here from any device; must be listed in Supabase Auth > URL Configuration.
+export const WEB_APP_URL = 'https://sergiojaz.github.io/sergeant-web/';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -16,6 +20,7 @@ export const supabase = createClient(url, anonKey, {
     storage: typeof window === 'undefined' ? undefined : AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // Web signs in from the email confirmation link's #access_token.
+    detectSessionInUrl: typeof window !== 'undefined' && Platform.OS === 'web',
   },
 });
