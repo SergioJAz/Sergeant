@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DEFAULT_APPEARANCE, parseAppearance, resolveMode, resolveTokens, type Appearance, type CustomTheme, type Overrides } from '@/theme/appearance';
 import { fontFamily } from '@/theme/fonts';
-import { navLayout } from '@/theme/layout';
+import { BP, navLayout } from '@/theme/layout';
 import type { Mode, Tokens } from '@/theme/palette';
 
 export type Theme = Tokens & {
@@ -89,6 +89,9 @@ export function useThemePref() {
 export function useTheme(): Theme {
   return useThemeCtx().theme;
 }
+
+// Phones get a pared-down layout; tablets and desktop keep everything.
+export const usePhone = () => useWindowDimensions().width < BP.two;
 
 export function useIsDark() {
   return useTheme().mode === 'dark';

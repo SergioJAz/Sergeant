@@ -18,7 +18,7 @@ import { requestPermission, useNotifyState } from '@/lib/notify';
 import { useStore } from '@/lib/store';
 import { addDays, hmToMin, localDate, localHM, minToHm } from '@/lib/time';
 import type { Block } from '@/lib/types';
-import { Banner, Card, Empty, Row, Screen, Section, SmallBtn, T, useNow, useTheme } from '@/lib/ui';
+import { Banner, Card, Empty, Row, Screen, Section, SmallBtn, T, useNow, usePhone, useTheme } from '@/lib/ui';
 
 type Slot = { start: string; end: string };
 
@@ -32,6 +32,7 @@ export default function TodayScreen() {
   const [editing, setEditing] = useState<Block | 'new' | Slot | null>(null);
   const [finishing, setFinishing] = useState<{ block: Block; outcome?: 'done' | 'partial' | 'skipped' } | null>(null);
   const notify = useNotifyState();
+  const phone = usePhone();
 
   const blocks = blocksOn(data, today);
   const fixed = busyOn(data, today);
@@ -136,7 +137,7 @@ export default function TodayScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <Screen wide subtitle={shortDate} title="Today"
-        right={
+        right={phone ? <SyncStatus quiet /> :
           <Row style={{ alignItems: 'flex-end' }}>
             <View style={{ alignItems: 'flex-end' }}>
               <T muted size={13}>{clock(bounds.start)} → <T bold muted size={13}>{clock(bounds.end)}</T></T>
@@ -145,7 +146,7 @@ export default function TodayScreen() {
             <SyncStatus />
           </Row>
         }>
-        <Columns sections={[rightNow, restOfToday, <TodoList key="todo" />, <TodaySide key="side" today={today} />]} plan={{ 2: [[0, 3, 2], [1]], 3: [[0, 2], [1], [3]] }} />
+        <Columns sections={[rightNow, restOfToday, <TodoList key="todo" />, <TodaySide key="side" today={today} />]} plan={{ 1: [0, 1, 2], 2: [[0, 3, 2], [1]], 3: [[0, 2], [1], [3]] }} />
       </Screen>
 
       {editing ? <BlockEditor block={editing === 'new' || slot ? null : (editing as Block)} slot={slot} date={today} onClose={() => setEditing(null)} /> : null}

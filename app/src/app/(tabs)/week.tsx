@@ -13,7 +13,7 @@ import { KINDS, KIND_LABEL } from '@/lib/kinds';
 import { useStore } from '@/lib/store';
 import { addDays, dayLabel, localDate, mondayOf, weekday, WEEKDAYS } from '@/lib/time';
 import type { Block } from '@/lib/types';
-import { Empty, interactive, Progress, Row, Screen, Section, SmallBtn, T, useNow, useTheme, type PState } from '@/lib/ui';
+import { Empty, interactive, Progress, Row, Screen, Section, SmallBtn, T, useNow, usePhone, useTheme, type PState } from '@/lib/ui';
 import { columnsFor } from '@/theme/layout';
 
 export default function WeekScreen() {
@@ -28,6 +28,7 @@ export default function WeekScreen() {
   const [editing, setEditing] = useState<Block | 'new' | null>(null);
   const [finishing, setFinishing] = useState<Block | null>(null);
   const wide = columnsFor(width + 32) > 1;
+  const phone = usePhone();
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   const entriesByDay = days.map((d) => dayEntries(data, d).filter((e) => e.kind !== null || e.block !== null));
@@ -53,7 +54,7 @@ export default function WeekScreen() {
   return (
     <Screen wide subtitle={`Week of ${dayLabel(monday)}`} title="Week" right={
       <View style={{ gap: 8, alignItems: 'flex-end' }}>
-        <T muted size={13}>{fmtDur(weekMin)} planned</T>
+        {!phone ? <T muted size={13}>{fmtDur(weekMin)} planned</T> : null}
         <Row wrap><SmallBtn ghost title="Stats" onPress={() => router.push('/stats')} /><SmallBtn filled title="Plan my week" onPress={() => router.push('/plan')} /></Row>
       </View>
     }>
@@ -95,7 +96,7 @@ export default function WeekScreen() {
             <View>{selected.map((e) => <AgendaRow key={e.key} entry={e} clock24={t.clock24} onPress={e.block ? () => setEditing(e.block) : undefined} onFinish={e.block ? () => setFinishing(e.block) : undefined} />)}</View>
           ) : <Empty title="Free day" body="No blocks on this day yet." />}
         </Section>
-        <Section title="Week at a glance">
+        {!phone ? <Section title="Week at a glance">
           <View style={{ padding: 14, borderRadius: t.radius, backgroundColor: t.surface, gap: 12 }}>
             {kinds.length ? kinds.map((k) => (
               <Row key={k}><KindMarker kind={k} size={20} /><View style={{ flex: 1 }}><T>{KIND_LABEL[k]}</T></View><T muted>{fmtDur(totals[k])}</T></Row>
@@ -103,7 +104,7 @@ export default function WeekScreen() {
             <Row wrap style={{ justifyContent: 'space-between' }}><T bold>{fmtDur(weekMin)} planned</T><T muted>{fmtDur(doneMin)} done</T></Row>
             <Progress value={weekMin ? doneMin / weekMin : 0} color={t.ok} />
           </View>
-        </Section>
+        </Section> : null}
       </View>
       {editing ? <BlockEditor block={editing === 'new' ? null : editing} date={day} onClose={() => setEditing(null)} /> : null}
       {finishing ? <FinishPanel block={finishing} onClose={() => setFinishing(null)} /> : null}

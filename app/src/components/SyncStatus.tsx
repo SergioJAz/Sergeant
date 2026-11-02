@@ -5,7 +5,8 @@ import { useStore } from '@/lib/store';
 import { T, useTheme } from '@/lib/ui';
 
 // Contracts 1: pending, failed and conflict counts visible on Today and Settings.
-export function SyncStatus() {
+// quiet: show nothing while everything is synced (phone headers).
+export function SyncStatus({ quiet }: { quiet?: boolean }) {
   const { queue, status, data } = useStore();
   const t = useTheme();
   const pending = queue.filter((o) => o.state === 'pending' || o.state === 'sent').length;
@@ -20,7 +21,8 @@ export function SyncStatus() {
         failed ? `${failed} failed (offline?)` : null,
         rejected ? `${rejected} rejected` : null,
         conflicts ? `${conflicts} conflicts` : null,
-      ].filter(Boolean).join(', ') || (status.lastSync ? 'All synced' : status.error ? 'Offline' : 'Not synced yet');
+      ].filter(Boolean).join(', ') || (status.error ? 'Sync failed' : status.lastSync ? 'All synced' : 'Not synced yet');
+  if (quiet && !bad && !pending && !status.syncing && !status.error) return null;
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`Sync status: ${text}`} onPress={() => router.push('/settings')}
       style={{ alignSelf: 'flex-start', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 12, borderWidth: 1, borderColor: bad ? t.danger : t.line }}>

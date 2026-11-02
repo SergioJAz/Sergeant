@@ -13,7 +13,7 @@ import { requestPermission, useNotifyState } from '@/lib/notify';
 import { useStore, type WriteInput } from '@/lib/store';
 import { WEEKDAYS } from '@/lib/time';
 import type { Conflict, FixedEvent, Oneoff } from '@/lib/types';
-import { Banner, Btn, Card, Chips, Field, H, Row, Screen, SmallBtn, T, Toggle, useTheme } from '@/lib/ui';
+import { Banner, Btn, Card, Chips, Field, H, Row, Screen, SmallBtn, T, Toggle, usePhone, useTheme } from '@/lib/ui';
 
 const HM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -28,6 +28,8 @@ export default function SettingsScreen() {
   const [saved, setSaved] = useState<string | null>(null);
   const [logoutAsk, setLogoutAsk] = useState(false);
   const [typed, setTyped] = useState('');
+  const [moreLook, setMoreLook] = useState(false);
+  const phone = usePhone();
 
   const [r, setR] = useState(() => toForm(cfg, getTz(data)));
   useEffect(() => setR(toForm(cfg, getTz(data))), [settings?.rev]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -80,14 +82,14 @@ export default function SettingsScreen() {
     setError((await signOut()).error);
   }
 
-  const themeSections = useThemeSections(saveConfig);
+  const themeSections = useThemeSections(saveConfig, !phone || moreLook);
   const openConflicts = data.sync_conflicts.filter((c) => !c.resolved_at);
   const problemOps = queue.filter((o) => o.state === 'failed' || o.state === 'rejected' || o.state === 'conflict');
 
   return (
     <Screen wide subtitle="Preferences" title="Settings" right={<SyncStatus />}>
       <Columns
-        plan={{ 2: [[0, 1, 2, 4, 6, 7, 12], [3, 5, 8, 9, 10, 11, 13]], 3: [[0, 1, 2, 7, 12], [3, 4, 8, 13], [5, 6, 9, 10, 11]] }}
+        plan={{ 1: moreLook ? [7, 9, 12, 11, 13, 0, 4, 14, 8, 10, 1, 2, 3, 5, 6] : [7, 9, 12, 11, 13, 0, 4, 14], 2: [[0, 1, 2, 4, 6, 7, 12], [3, 5, 8, 9, 10, 11, 13]], 3: [[0, 1, 2, 7, 12], [3, 4, 8, 13], [5, 6, 9, 10, 11]] }}
         sections={[
           ...themeSections,
           <TextSection key="text" />,
@@ -208,6 +210,7 @@ export default function SettingsScreen() {
               </Banner>
             )}
           </Card>,
+          phone ? <Row key="more-look"><SmallBtn ghost title={moreLook ? 'Fewer settings' : 'More settings: planning rules, one-offs, themes, layout'} onPress={() => setMoreLook(!moreLook)} /></Row> : null,
         ]}
       />
       {error ? <Text accessibilityRole="alert" style={{ color: t.danger, fontWeight: '600' }}>{error}</Text> : null}

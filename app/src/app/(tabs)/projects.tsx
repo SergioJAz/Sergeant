@@ -9,7 +9,7 @@ import { activeChunks, estMin, fmtDue, getTz, ITEM_TYPES, parseDue, pressure, re
 import { useStore, uuid } from '@/lib/store';
 import { dayLabel } from '@/lib/time';
 import type { Item, ItemType } from '@/lib/types';
-import { Btn, Card, Chips, Empty, Field, H, Pill, Progress, Row, Screen, Section, SmallBtn, T, Toggle, useTheme } from '@/lib/ui';
+import { Btn, Card, Chips, Empty, Field, H, Pill, Progress, Row, Screen, Section, SmallBtn, T, Toggle, usePhone, useTheme } from '@/lib/ui';
 
 export default function ProjectsScreen() {
   const { data, write } = useStore();
@@ -22,6 +22,8 @@ export default function ProjectsScreen() {
   const [qa, setQa] = useState({ course_id: '', type: 'homework' as ItemType, title: '', due: '', est: '1', laptop: false });
   const [err, setErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const phone = usePhone();
+  const [showAdd, setShowAdd] = useState(false);
 
   async function addCourse() {
     if (!nc.code.trim() || !nc.name.trim() || !nc.short.trim()) return setErr('Code, name and short name are required.');
@@ -98,8 +100,8 @@ export default function ProjectsScreen() {
   );
 
   const quickAddSection = courses.length ? (
-    <Section key="add" title="Add to a course">
-        <Card>
+    <Section key="add" title="Add to a course" right={phone ? <SmallBtn ghost title={showAdd ? 'Hide' : '+ Add item'} onPress={() => setShowAdd(!showAdd)} /> : undefined}>
+        {!phone || showAdd ? <Card>
           <H size={17}>Quick add</H>
           <Chips label="Course" options={courses.map((c) => ({ value: c.id, label: c.short }))} value={qa.course_id} onChange={(v) => setQa({ ...qa, course_id: v })} />
           <Chips label="Type" options={ITEM_TYPES} value={qa.type} onChange={(v) => setQa({ ...qa, type: v })} />
@@ -111,7 +113,7 @@ export default function ProjectsScreen() {
           <Toggle label="Needs laptop" value={qa.laptop} onChange={(v) => setQa({ ...qa, laptop: v })} />
           <Btn title="Add item" onPress={quickAdd} />
           {msg ? <T color={t.ok}>{msg}</T> : null}
-        </Card>
+        </Card> : null}
     </Section>
   ) : null;
 

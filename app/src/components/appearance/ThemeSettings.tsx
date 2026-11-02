@@ -44,7 +44,8 @@ function Swatch({ name, light, dark, on, onPress }: { name: string; light: Overr
 const variants = (base: FamilyId, c?: CustomTheme) => ({ light: { ...buildTokens(base, 'light'), ...c?.light }, dark: { ...buildTokens(base, 'dark'), ...c?.dark } });
 
 // Returns sections 0 to 3 (Appearance, My themes, Themes, Colors); they share the colour draft, so one hook builds all four.
-export function useThemeSections(saveConfig: (patch: Record<string, unknown>) => Promise<void>): ReactNode[] {
+// colorsShown false (phone, folded): unsaved colour edits are dropped instead of tinting the app with no Save in sight.
+export function useThemeSections(saveConfig: (patch: Record<string, unknown>) => Promise<void>, colorsShown = true): ReactNode[] {
   const t = useTheme();
   const systemDark = useColorScheme() === 'dark';
   const { appearance: a, update, setDraft } = useAppearance();
@@ -58,7 +59,7 @@ export function useThemeSections(saveConfig: (patch: Record<string, unknown>) =>
   const [hex, setHex] = useState('');
   const [naming, setNaming] = useState<string | null>(null);
 
-  useEffect(() => setDrafts(NO_DRAFT), [a.themeId]);
+  useEffect(() => setDrafts(NO_DRAFT), [a.themeId, colorsShown]);
   useEffect(() => setDraft(Object.keys(drafts[mode]).length ? drafts[mode] : null), [drafts, mode, setDraft]);
   useEffect(() => () => setDraft(null), [setDraft]);
 
