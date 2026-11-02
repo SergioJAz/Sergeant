@@ -76,22 +76,24 @@ const monoDark: Tokens = {
 function generated(h: number, sa: number, mode: Mode): Tokens {
   if (mode === 'light') {
     const base = classicLight, surface = '#ffffff', bg = hsl(h, sa * 0.35, 96);
-    const on = [bg, surface], pr = ensure(h, Math.max(sa, 30), 44, [surface, bg], 4.5, -1);
+    const on = [bg, surface], primarySoft = hsl(h, sa * 0.6, 93);
+    const pr = ensure(h, Math.max(sa, 30), 44, [surface, bg, primarySoft], 4.5, -1);
     return {
       ...base, bg, surface, surface2: hsl(h, sa * 0.35, 93), field: hsl(h, sa * 0.3, 98), line: hsl(h, 20, 88),
       text: ensure(h, 30, 10, on, 4.5, -1), muted: ensure(h, 10, 36, on, 4.5, -1), border: ensure(h, 12, 56, on, 3, -1),
-      primary: pr, focus: pr, primarySoft: hsl(h, sa * 0.6, 93),
+      primary: pr, focus: pr, primarySoft,
       hero: ensure(h, Math.max(sa * 0.7, 10), 32, [base.onHero], 4.5, -1),
       bar: ensure(30, 75, 44, [surface], 3, -1), uni: ensure(220, 65, 46, [surface], 3, -1),
       proj: ensure(25, 75, 44, [surface], 3, -1), train: ensure(352, 58, 44, [surface], 3, -1), err: ensure(152, 52, 38, [surface], 3, -1),
     };
   }
   const base = classicDark, bg = hsl(h, sa * 0.35, 7), surface = hsl(h, sa * 0.3, 12);
-  const on = [bg, surface], pr = ensure(h, Math.max(sa, 40), 70, [surface, bg], 4.5, 1);
+  const on = [bg, surface], primarySoft = hsl(h, sa * 0.4, 22);
+  const pr = ensure(h, Math.max(sa, 40), 70, [surface, bg, primarySoft], 4.5, 1);
   return {
     ...base, bg, surface, surface2: hsl(h, sa * 0.3, 16), elevated: hsl(h, sa * 0.3, 15), field: hsl(h, sa * 0.3, 9), line: hsl(h, 18, 21),
     text: ensure(h, 20, 94, on, 4.5, 1), muted: ensure(h, 12, 68, on, 4.5, 1), border: ensure(h, 12, 48, on, 3, 1),
-    primary: pr, focus: ensure(h, Math.max(sa, 40), 82, on, 4.5, 1), primarySoft: hsl(h, sa * 0.4, 22), onPrimary: bg,
+    primary: pr, focus: ensure(h, Math.max(sa, 40), 82, on, 4.5, 1), primarySoft, onPrimary: bg,
     hero: ensure(h, Math.max(sa * 0.8, 15), 38, [base.onHero], 4.5, -1),
     bar: ensure(30, 85, 66, [surface], 3, 1), uni: ensure(220, 100, 75, [surface], 3, 1),
     proj: ensure(25, 100, 68, [surface], 3, 1), train: ensure(352, 100, 74, [surface], 3, 1), err: ensure(152, 60, 62, [surface], 3, 1),

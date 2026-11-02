@@ -14,6 +14,7 @@ test('every family and mode meets AA', () => {
     for (const k of ['text', 'muted'] as const) for (const b of ['bg', 'surface'] as const)
       assert.ok(contrast(t[k], t[b]) >= 4.5, `${at} ${k} on ${b}`);
     assert.ok(contrast(t.onPrimary, t.primary) >= 4.5, `${at} onPrimary`);
+    assert.ok(contrast(t.primary, t.primarySoft) >= 4.5, `${at} primary on primarySoft`);
     assert.ok(contrast(t.onHero, t.hero) >= 4.5, `${at} onHero`);
     for (const k of ['primary', 'uni', 'proj', 'train', 'err', 'bar'] as const)
       assert.ok(contrast(t[k], t.surface) >= 3, `${at} ${k}`);
