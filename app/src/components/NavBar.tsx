@@ -1,7 +1,7 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 
-import { blockEndMs, blockStartMs, blocksOn, getTz } from '@/lib/domain';
+import { blockEndMs, blockStartMs, blockTitle, blocksOn, getTz, upcomingItems } from '@/lib/domain';
 import { useStore } from '@/lib/store';
 import { localDate } from '@/lib/time';
 import { H, Progress, T, useNow, useTheme, useThemePref, type ThemePref } from '@/lib/ui';
@@ -73,10 +73,8 @@ function SidebarExtras({ showNow }: { showNow: boolean }) {
   const blocks = blocksOn(data, localDate(now, tz)).filter((b) => b.status === 'planned');
   const current = blocks.find((b) => blockStartMs(b, tz) <= now && now < blockEndMs(b, tz));
   const next = blocks.find((b) => blockStartMs(b, tz) > now);
-  const title = (b: (typeof blocks)[number]) => b.what ?? data.items.find((i) => i.id === b.item_id)?.title ?? b.type;
-  const deadline = data.items
-    .filter((i) => i.status === 'active' && i.due_at && Date.parse(i.due_at) >= now)
-    .sort((a, b) => a.due_at!.localeCompare(b.due_at!))[0];
+  const title = (b: (typeof blocks)[number]) => blockTitle(data, b);
+  const deadline = upcomingItems(data, now, 1)[0];
   const card = { backgroundColor: t.surface2, borderRadius: t.radius, padding: 12, gap: 4 };
 
   return (

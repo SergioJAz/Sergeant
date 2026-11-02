@@ -1,5 +1,7 @@
 // Derived values shared by screens: settings with defaults, progress, pressure, day layout.
 import { addDays, hmToMin, localDate, toInstant, weekday } from './time';
+import { kindOfFixed, kindOfOneoff, type Kind } from './kinds';
+import { buildTimeline, type AgendaEntry } from './agenda';
 import type { Block, Chunk, Data, FixedEvent, Item, ItemType, Oneoff } from './types';
 
 export const DEFAULT_CONFIG = {
@@ -72,27 +74,39 @@ export function blocksOn(data: Data, date: string): Block[] {
     .sort((a, b) => a.start_time.localeCompare(b.start_time));
 }
 
-export type Busy = { label: string; start: number; end: number; hard: boolean };
+export type Busy = { label: string; start: number; end: number; hard: boolean; kind: Kind | null };
 
 // Occupied intervals in minutes of the local day (overnight events split across days).
 export function busyOn(data: Data, date: string): Busy[] {
   const out: Busy[] = [];
-  const add = (label: string, s: number, e: number, hard = true) => out.push({ label, start: s, end: e, hard });
+  const add = (label: string, s: number, e: number, kind: Kind | null, hard = true) => out.push({ label, start: s, end: e, hard, kind });
   for (const f of fixedOn(data, date)) {
     const s = hmToMin(f.start_time), e = hmToMin(f.end_time);
-    if (e > s) add(f.label, s, e);
-    else add(f.label, s, 1440);
+    if (e > s) add(f.label, s, e, kindOfFixed(f));
+    else add(f.label, s, 1440, kindOfFixed(f));
   }
   for (const f of fixedOn(data, addDays(date, -1))) {
     const s = hmToMin(f.start_time), e = hmToMin(f.end_time);
-    if (e <= s) add(f.label, 0, e);
+    if (e <= s) add(f.label, 0, e, kindOfFixed(f));
   }
   for (const o of oneoffsOn(data, date)) {
-    if (o.all_day || !o.start_time || !o.end_time) add(o.label, 0, 1440);
-    else add(o.label, hmToMin(o.start_time), hmToMin(o.end_time));
+    if (o.all_day || !o.start_time || !o.end_time) add(o.label, 0, 1440, kindOfOneoff(o));
+    else add(o.label, hmToMin(o.start_time), hmToMin(o.end_time), kindOfOneoff(o));
   }
   return out;
 }
+
+export const blockTitle = (data: Data, b: Block): string => b.what ?? data.items.find((i) => i.id === b.item_id)?.title ?? b.type;
+
+export const dayEntries = (data: Data, date: string): AgendaEntry[] =>
+  buildTimeline(blocksOn(data, date), busyOn(data, date), (b) => blockTitle(data, b));
+
+// Active items due from now on, nearest first.
+export const upcomingItems = (data: Data, nowMs: number, n: number): Item[] =>
+  data.items
+    .filter((i) => i.status === 'active' && i.due_at && Date.parse(i.due_at) >= nowMs)
+    .sort((a, b) => a.due_at!.localeCompare(b.due_at!))
+    .slice(0, n);
 
 // D01: manual edits that break hard constraints get feedback (not blocked).
 export function blockConflicts(data: Data, b: Pick<Block, 'id' | 'date' | 'start_time' | 'end_time'>) {
