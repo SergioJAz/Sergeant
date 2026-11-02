@@ -2,12 +2,12 @@
 ontology: true
 type: design
 domain: sergeant
-status: draft
+status: active
 summary: Sergeant redesign from uni study tracker to whole-life scheduler, with new Today/Week/Projects/Settings UI, themes and responsive layouts
 tags: [sergeant, redesign, ui, scheduling, theming, responsive]
 related: [Study_Helper_App_Spec, Study_Helper_Contracts, Study_Helper_Decisions, 2026-11-02-sergeant-redesign-demo]
 discovered: 2026-11-02
-verified: false
+verified: true
 ---
 
 # Sergeant redesign: whole-life scheduler
@@ -52,7 +52,7 @@ including blocking other apps' notifications while he works.
 - Losing data: day off and skip **move** work, never delete it. Queued offline work must survive (existing rule, D04).
 - Breaking the offline-first sync, op queue and RLS model already in the app.
 
-## Already shipped (2026-11-02, uncommitted on this branch until merged)
+## Already shipped (2026-11-02)
 
 - `USE_EXACT_ALARM` added in `app/app.json` (and the generated Android manifest). Alarms now schedule exact
   (`window=0`, allow-while-idle) instead of a 1-hour inexact window. Verified with `adb shell dumpsys alarm`.
