@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { View } from 'react-native';
 
 import { startTimer } from '@/lib/actions';
@@ -17,15 +18,18 @@ export function NowCard({ entries, nowMin, onFinish }: { entries: AgendaEntry[];
   const t = useTheme();
   const { current, next } = nowFocus(entries, nowMin);
   const timerRunning = data.active_timer.length > 0;
+  const [ending, setEnding] = useState(false); // a double tap must not write twice
   const clock = (m: number) => fmtClock(m, t.clock24);
   const focus = (b: Block) => <View style={{ flex: 1, minWidth: 120 }}><Btn secondary title="Start focus" onPress={() => void startTimer(write, b, deviceId, ['Break', 'Rest'].includes(b.type) ? 'break' : 'study')} /></View>;
 
   // The break stops now; the work it pushed later goes back through Replan, which re-places auto blocks.
   async function endBreak(b: Block) {
+    setEnding(true);
     const started = nowMin > current!.start;
     await write([started
       ? { entity: 'blocks', kind: 'update', row_id: b.id, payload: { end_time: minToHm(nowMin), status: 'done' } }
       : { entity: 'blocks', kind: 'delete', row_id: b.id }]);
+    setEnding(false);
     router.push('/plan');
   }
 
@@ -38,7 +42,7 @@ export function NowCard({ entries, nowMin, onFinish }: { entries: AgendaEntry[];
         <T size={13} color={t.onHero}>{`${current.end - nowMin} min left`}</T>
         <Progress value={(nowMin - current.start) / (current.end - current.start)} color={t.onHero} />
         {b?.status === 'planned' && b.type === 'Break' && b.source === 'manual' ? (
-          <View style={{ marginTop: 6 }}><Btn secondary title="End break early" onPress={() => void endBreak(b)} /></View>
+          <View style={{ marginTop: 6 }}><Btn secondary title="End break early" disabled={ending} onPress={() => void endBreak(b)} /></View>
         ) : b?.status === 'planned' ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
             <View style={{ flex: 1, minWidth: 120 }}><Btn title="Done" onPress={() => onFinish(b, 'done')} /></View>

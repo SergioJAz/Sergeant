@@ -76,15 +76,16 @@ export function fmtDur(m: number): string {
 }
 
 // Work limit: study minutes over the daily cap, and the auto-placed blocks a replan would move off the day (latest first).
+// Blocks that already started stay put in a replan, so they are never listed.
 const NOT_STUDY = ['Rest', 'Review', 'Break', 'Fixed', 'Buffer']; // same as the scheduler's NOT_STUDY
-export function overLimit(blocks: Block[], limitMin: number) {
+export function overLimit(blocks: Block[], limitMin: number, nowMin: number) {
   const study = blocks.filter((b) => !NOT_STUDY.includes(b.type) && b.status !== 'skipped');
   const total = study.reduce((s, b) => s + min(b.end_time) - min(b.start_time), 0);
   const moves: Block[] = [];
   let over = total - limitMin;
   for (const b of [...study].sort((a, c) => c.start_time.localeCompare(a.start_time))) {
     if (over <= 0) break;
-    if (b.status !== 'planned' || b.source === 'manual' || b.locked) continue;
+    if (b.status !== 'planned' || b.source === 'manual' || b.locked || min(b.start_time) < nowMin) continue;
     moves.unshift(b);
     over -= min(b.end_time) - min(b.start_time);
   }
