@@ -4,6 +4,7 @@ import { View } from 'react-native';
 
 import { AgendaRow, GapRow } from '@/components/AgendaRow';
 import { BlockEditor } from '@/components/BlockEditor';
+import { BreakSheet } from '@/components/BreakSheet';
 import { Columns } from '@/components/Columns';
 import { FinishPanel } from '@/components/FinishPanel';
 import { NowCard, nowFocus } from '@/components/NowCard';
@@ -34,6 +35,8 @@ export default function TodayScreen() {
   const day = addDays(today, offset);
   const [editing, setEditing] = useState<Block | 'new' | Slot | null>(null);
   const [finishing, setFinishing] = useState<{ block: Block; outcome?: 'done' | 'partial' | 'skipped' } | null>(null);
+  const [breakOpen, setBreakOpen] = useState(false);
+  const [unfit, setUnfit] = useState(0); // blocks a break pushed past the stop time
   const notify = useNotifyState();
   const phone = usePhone();
 
@@ -105,6 +108,16 @@ export default function TodayScreen() {
       {timer && timerBlock
         ? <TimerCard onFinish={(b) => setFinishing({ block: b })} />
         : <NowCard entries={entries} nowMin={nowMin} onFinish={(b, outcome) => setFinishing({ block: b, outcome })} />}
+      {timer ? null : <Row><SmallBtn title="Take a break" onPress={() => setBreakOpen(true)} /></Row>}
+      {unfit ? (
+        <Banner>
+          <T>{unfit === 1 ? '1 block' : `${unfit} blocks`} no longer fit today after your break.</T>
+          <Row>
+            <SmallBtn filled title="Replan my week" onPress={() => { setUnfit(0); router.push('/plan'); }} />
+            <SmallBtn ghost title="Dismiss" onPress={() => setUnfit(0)} />
+          </Row>
+        </Banner>
+      ) : null}
       <T muted size={13}>{`Logged ${fmtDur(doneMin)} today · ${fmtDur(Math.abs(diff))} ${diff >= 0 ? 'ahead' : 'behind'}`}</T>
 
       {missed.length ? (
@@ -169,6 +182,7 @@ export default function TodayScreen() {
 
       {editing ? <BlockEditor block={editing === 'new' || slot ? null : (editing as Block)} slot={slot} date={day}onClose={() => setEditing(null)} /> : null}
       {finishing ? <FinishPanel block={finishing.block} initial={finishing.outcome} onClose={() => setFinishing(null)} /> : null}
+      {breakOpen ? <BreakSheet date={today} nowMin={nowMin} onClose={() => setBreakOpen(false)} onDone={setUnfit} /> : null}
       <Tour id="today" steps={[
         { title: 'Welcome to Sergeant', body: 'Today shows what to do right now and the rest of your day. The arrows at the top let you look at other days.' },
         { title: 'Plan your week', body: 'Add courses and deadlines in Projects, then tap Plan my week. Sergeant fits study blocks around your fixed events.' },
