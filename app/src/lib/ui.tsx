@@ -28,6 +28,7 @@ function initialAppearance(): Appearance {
 let customList: CustomTheme[] = [];
 let pushCustom: (l: CustomTheme[]) => void = () => {};
 export function setCustomThemes(list: CustomTheme[]) {
+  if (JSON.stringify(list) === JSON.stringify(customList)) return; // every store save hands a new config; re-theme only on a real change
   customList = list;
   pushCustom(list);
 }
