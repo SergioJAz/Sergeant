@@ -5,7 +5,8 @@
 //   npm run cli -- list items [field=value ...]
 //   npm run cli -- write ops.json [--dry-run]      (or - for stdin)
 //
-// ops.json: [{ "entity": "items", "kind": "insert" | "update" | "delete", "row_id"?: "<uuid>", "payload"?: {...} }]
+// ops.json: [{ "entity": "items", "kind": "insert" | "update" | "delete", "row_id"?: "<uuid>", "base_rev"?: <rev from list>, "payload"?: {...} }]
+// Give base_rev to have the server flag a conflict if the app changed the row (time logs, block/chunk status) since you read it.
 // Sign-in: SERGEANT_EMAIL and SERGEANT_PASSWORD from your shell, never from a file in the repo.
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'node:crypto';
@@ -22,7 +23,7 @@ function fail(msg: string): never {
   process.exit(1);
 }
 
-type OpIn = { entity: string; kind: string; row_id?: string; payload?: Record<string, unknown> };
+type OpIn = { entity: string; kind: string; row_id?: string; base_rev?: number; payload?: Record<string, unknown> };
 
 export function validateOps(raw: unknown): OpIn[] {
   if (!Array.isArray(raw)) throw new Error('ops must be a JSON array');
@@ -92,8 +93,9 @@ async function main() {
     const out = [];
     for (const o of ops) {
       const op: Record<string, unknown> = { op_id: randomUUID(), entity: o.entity, kind: o.kind, row_id: o.row_id ?? randomUUID(), payload: o.payload ?? {} };
-      if (o.kind !== 'insert') {
-        // the server only checks base_rev on protected rows (time logs, block/chunk status), so sending it always is safe
+      if (o.kind !== 'insert' && typeof o.base_rev === 'number') op.base_rev = o.base_rev; // rev from your `list`: a newer edit makes this a conflict
+      else if (o.kind !== 'insert') {
+        // no rev given: last writer wins. The server only checks base_rev on protected rows, so sending it is safe.
         const { data, error } = await sb.from(o.entity).select('rev').eq('id', o.row_id!).maybeSingle();
         if (error) fail(error.message);
         if (!data) fail(`${o.entity} ${o.row_id} not found`);

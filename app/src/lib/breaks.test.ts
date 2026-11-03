@@ -32,8 +32,18 @@ test('the block in progress splits: worked part stays, rest continues after the 
   assert.equal(cont?.payload!.end_time, '10:45');
 });
 
-test('work that no longer fits before the stop time is reported, not moved', () => {
+test('work that no longer fits before the stop time is skipped for replan, never deleted', () => {
   const { ops, unfit } = planBreak([blk('a', '21:00', '22:00')], [], D, 1200, 60, 1320);
   assert.deepEqual(unfit.map((b) => b.id), ['a']);
-  assert.equal(ops.length, 1);
+  assert.equal(updates(ops).a.status, 'skipped');
+  assert.ok(!ops.some((o) => o.kind === 'delete'));
+});
+
+test('an in-progress block that cannot continue keeps its worked part', () => {
+  const { ops } = planBreak([blk('a', '21:30', '22:30')], [], D, 1300, 60, 1320); // now 21:40, rest would end past 22:00
+  assert.deepEqual(updates(ops).a, { end_time: '21:40' });
+});
+
+test('no break after the stop time', () => {
+  assert.deepEqual(planBreak([], [], D, 1330, 15, 1320).ops, []);
 });

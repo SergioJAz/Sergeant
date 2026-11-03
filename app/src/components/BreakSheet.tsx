@@ -14,6 +14,7 @@ export function BreakSheet({ date, nowMin, onClose, onDone }: { date: string; no
   const [len, setLen] = useState('15');
   const min = Number(len);
   const ok = Number.isInteger(min) && min > 0 && min <= 240;
+  const over = nowMin >= hmToMin(getConfig(data).hard_stop); // past the stop time there is nothing left to shift
 
   async function start() {
     const { ops, unfit } = planBreak(blocksOn(data, date), busyOn(data, date), date, nowMin, min, hmToMin(getConfig(data).hard_stop));
@@ -27,7 +28,7 @@ export function BreakSheet({ date, nowMin, onClose, onDone }: { date: string; no
       <T muted>Your planned work after now slides later by the break. Fixed times and blocks you placed by hand stay put.</T>
       <Chips label="Minutes" options={LENGTHS} value={(LENGTHS as readonly string[]).includes(len) ? (len as (typeof LENGTHS)[number]) : null} onChange={setLen} />
       <Field label="Or type minutes" value={len} onChange={setLen} keyboard="numeric" />
-      <Btn title={ok ? `Break for ${min} min` : 'Enter 1 to 240 minutes'} disabled={!ok} onPress={() => void start()} />
+      <Btn title={over ? 'Your day is already over' : ok ? `Break for ${min} min` : 'Enter 1 to 240 minutes'} disabled={!ok || over} onPress={() => void start()} />
     </Sheet>
   );
 }

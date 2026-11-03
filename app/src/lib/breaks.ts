@@ -10,6 +10,7 @@ const minToHm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:$
 // blocks: the day's blocks (blocksOn); busy: fixed times and one-offs (busyOn). Minutes are local to that day.
 export function planBreak(blocks: Block[], busy: Span[], date: string, nowMin: number, len: number, hardStop: number) {
   const stop = Math.min(hardStop, 1439); // end_time cannot be 24:00
+  if (nowMin >= stop) return { ops: [] as WriteInput[], unfit: [] as Block[] }; // day is over; the sheet says so
   const breakEnd = nowMin + len;
   const moves = (b: Block) => b.status === 'planned' && b.type !== 'Fixed' && b.source !== 'manual' && !b.locked && hmToMin(b.end_time) > nowMin;
   const move = blocks.filter(moves);
@@ -36,7 +37,12 @@ export function planBreak(blocks: Block[], busy: Span[], date: string, nowMin: n
       s = x.end;
     }
     if (s + dur > stop) {
+      // No room before the stop time. Keep any worked part; otherwise skip the block so it no longer overlaps the
+      // shifted plan. Its chunks stay unfinished, so Replan places that work again; nothing is deleted.
       unfit.push(b);
+      ops.push(inProgress
+        ? { entity: 'blocks', kind: 'update', row_id: b.id, payload: { end_time: minToHm(nowMin) } }
+        : { entity: 'blocks', kind: 'update', row_id: b.id, payload: { status: 'skipped', what: `${b.what ?? b.type} (no room after break)` } });
       continue;
     }
     cursor = s + dur;
