@@ -32,8 +32,11 @@ export default function TodayScreen() {
   const tz = getTz(data);
   const cfg = getConfig(data);
   const today = localDate(now, tz);
-  const [offset, setOffset] = useState(0); // days away from today shown in the agenda
-  const day = addDays(today, offset);
+  // The viewed day is stored as a date, so a page left open past midnight keeps showing the same day.
+  const [picked, setPicked] = useState<string | null>(null);
+  const day = picked ?? today;
+  const offset = Math.round((Date.parse(day) - Date.parse(today)) / 86_400_000);
+  const setOffset = (n: number) => setPicked(n === 0 ? null : addDays(today, n));
   const [editing, setEditing] = useState<Block | 'new' | Slot | null>(null);
   const [finishing, setFinishing] = useState<{ block: Block; outcome?: 'done' | 'partial' | 'skipped' } | null>(null);
   const [breakOpen, setBreakOpen] = useState(false);
@@ -123,7 +126,8 @@ export default function TodayScreen() {
       {dayOff ? (
         <Banner tone="info">
           <T bold>Day off</T>
-          <T muted>Rest today. Your work was moved to later this week.</T>
+          <T muted>Rest today. Accept the new plan to move today's work to later this week.</T>
+          <Row><SmallBtn filled title="Review plan" onPress={() => router.push('/plan')} /></Row>
           <Row><SmallBtn title="Undo day off" onPress={() => void write([{ entity: 'oneoff_blocks', kind: 'delete', row_id: dayOff.id }]).then(() => router.push('/plan'))} /></Row>
         </Banner>
       ) : timer ? null : (
