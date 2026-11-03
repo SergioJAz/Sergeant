@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { AgendaRow, GapRow } from '@/components/AgendaRow';
 import { BlockEditor } from '@/components/BlockEditor';
 import { BreakSheet } from '@/components/BreakSheet';
+import { DayOffSheet } from '@/components/DayOffSheet';
 import { Columns } from '@/components/Columns';
 import { FinishPanel } from '@/components/FinishPanel';
 import { NowCard, nowFocus } from '@/components/NowCard';
@@ -36,6 +37,7 @@ export default function TodayScreen() {
   const [editing, setEditing] = useState<Block | 'new' | Slot | null>(null);
   const [finishing, setFinishing] = useState<{ block: Block; outcome?: 'done' | 'partial' | 'skipped' } | null>(null);
   const [breakOpen, setBreakOpen] = useState(false);
+  const [dayOffOpen, setDayOffOpen] = useState(false);
   const [unfit, setUnfit] = useState(0); // blocks a break pushed past the stop time
   const notify = useNotifyState();
   const phone = usePhone();
@@ -43,6 +45,7 @@ export default function TodayScreen() {
   const blocks = blocksOn(data, today);
   const fixed = busyOn(data, today);
   const timer = data.active_timer[0] ?? null;
+  const dayOff = data.oneoff_blocks.find((o) => o.date === today && o.kind === 'off');
   const timerBlock = timer ? data.blocks.find((b) => b.id === timer.block_id) : null;
   const course = (id: string | null) => data.courses.find((c) => c.id === id)?.short ?? '';
 
@@ -108,7 +111,18 @@ export default function TodayScreen() {
       {timer && timerBlock
         ? <TimerCard onFinish={(b) => setFinishing({ block: b })} />
         : <NowCard entries={entries} nowMin={nowMin} onFinish={(b, outcome) => setFinishing({ block: b, outcome })} />}
-      {timer ? null : <Row><SmallBtn title="Take a break" onPress={() => setBreakOpen(true)} /></Row>}
+      {dayOff ? (
+        <Banner tone="info">
+          <T bold>Day off</T>
+          <T muted>Rest today. Your work was moved to later this week.</T>
+          <Row><SmallBtn title="Undo day off" onPress={() => void write([{ entity: 'oneoff_blocks', kind: 'delete', row_id: dayOff.id }]).then(() => router.push('/plan'))} /></Row>
+        </Banner>
+      ) : timer ? null : (
+        <Row>
+          <SmallBtn title="Take a break" onPress={() => setBreakOpen(true)} />
+          <SmallBtn title="Day off" onPress={() => setDayOffOpen(true)} />
+        </Row>
+      )}
       {unfit ? (
         <Banner>
           <T>{unfit === 1 ? '1 block' : `${unfit} blocks`} no longer fit today after your break.</T>
@@ -182,6 +196,7 @@ export default function TodayScreen() {
 
       {editing ? <BlockEditor block={editing === 'new' || slot ? null : (editing as Block)} slot={slot} date={day}onClose={() => setEditing(null)} /> : null}
       {finishing ? <FinishPanel block={finishing.block} initial={finishing.outcome} onClose={() => setFinishing(null)} /> : null}
+      {dayOffOpen ? <DayOffSheet date={today} onClose={() => setDayOffOpen(false)} /> : null}
       {breakOpen ? <BreakSheet date={today} nowMin={nowMin} onClose={() => setBreakOpen(false)} onDone={setUnfit} /> : null}
       <Tour id="today" steps={[
         { title: 'Welcome to Sergeant', body: 'Today shows what to do right now and the rest of your day. The arrows at the top let you look at other days.' },
