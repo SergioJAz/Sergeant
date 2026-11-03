@@ -45,18 +45,19 @@ export default function SettingsScreen() {
   async function saveRules() {
     const times = [r.wake, r.hard_stop, r.review_start, r.review_end, r.lunch_start, r.lunch_end, r.sunday_off_from];
     if (!times.every((x) => HM.test(x))) return setError('Times must be HH:MM.');
-    const nums = [r.study, r.brk, r.long, r.every, r.switch_after, r.rest, r.horizon].map(Number);
+    const nums = [r.study, r.brk, r.long, r.every, r.switch_after, r.rest, r.horizon, r.limit].map(Number);
     if (nums.some((n) => !Number.isFinite(n) || n < 0)) return setError('Numbers must be 0 or more.');
     try {
       new Intl.DateTimeFormat('en', { timeZone: r.timezone });
     } catch {
       return setError('Unknown timezone (use e.g. Asia/Beirut).');
     }
-    const [study, brk, long, every, sw, rest, horizon] = nums;
+    const [study, brk, long, every, sw, rest, horizon, limit] = nums;
     await saveConfig({
       wake: r.wake, hard_stop: r.hard_stop, review: { start: r.review_start, end: r.review_end }, lunch: { start: r.lunch_start, end: r.lunch_end },
       sunday_off_from: r.sunday_off_from, pomodoro: { study_min: study, break_min: brk, long_break_min: long, long_break_every: every },
       switch_after_blocks: sw, rest_after_exam_min: rest, horizon_days: Math.min(28, Math.max(1, horizon)),
+      daily_limit_min: Math.round(Math.min(24, limit) * 60),
     }, r.timezone);
     setError(null);
     setSaved('Rules saved.');
@@ -140,6 +141,7 @@ export default function SettingsScreen() {
               <Field label="Switch subject after N blocks" value={r.switch_after} onChange={(v) => setR({ ...r, switch_after: v })} keyboard="numeric" />
               <Field label="Rest after exam (min)" value={r.rest} onChange={(v) => setR({ ...r, rest: v })} keyboard="numeric" />
               <Field label="Days to plan ahead" value={r.horizon} onChange={(v) => setR({ ...r, horizon: v })} keyboard="numeric" />
+              <Field label="Daily study limit, hours (0 = off)" value={r.limit} onChange={(v) => setR({ ...r, limit: v })} keyboard="numeric" />
             </Row>
             <Btn title="Save rules" onPress={saveRules} />
             <SmallBtn title="Reset to defaults" onPress={() => setR(toForm(DEFAULT_CONFIG, getTz(data)))} />
@@ -225,7 +227,7 @@ function toForm(c: typeof DEFAULT_CONFIG, tz: string) {
     timezone: tz, wake: c.wake, hard_stop: c.hard_stop, sunday_off_from: c.sunday_off_from,
     study: String(c.pomodoro.study_min), brk: String(c.pomodoro.break_min), long: String(c.pomodoro.long_break_min), every: String(c.pomodoro.long_break_every),
     review_start: c.review.start, review_end: c.review.end, lunch_start: c.lunch.start, lunch_end: c.lunch.end,
-    switch_after: String(c.switch_after_blocks), rest: String(c.rest_after_exam_min), horizon: String(c.horizon_days),
+    switch_after: String(c.switch_after_blocks), rest: String(c.rest_after_exam_min), horizon: String(c.horizon_days), limit: String(c.daily_limit_min / 60),
   };
 }
 

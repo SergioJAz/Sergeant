@@ -15,6 +15,8 @@ export const DEFAULT_CONFIG = {
   rest_after_exam_min: 50,
   exam_defaults: { duration_min: 120, travel_before_min: 30, travel_after_min: 30 },
   horizon_days: 7,
+  daily_limit_min: 0, // 0 = no daily study limit
+  limit_off_dates: [] as string[], // days "Keep going today" lifted the limit
   notify: { block_start: true, block_end: true, break_end: true, summary: true, deadline: true, overload: true, nag: true, deadline_days: [7, 3, 1] },
 };
 export type Config = typeof DEFAULT_CONFIG;

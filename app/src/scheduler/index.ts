@@ -23,6 +23,8 @@ export type Settings = {
   sunday_off_from: string;
   rest_after_exam_min: number;
   exam_defaults: { duration_min: number; travel_before_min: number; travel_after_min: number };
+  daily_limit_min: number; // max study minutes per day, 0 = off; overflow goes to later days
+  limit_off_dates: string[]; // "Keep going today": dates the limit is lifted
 };
 
 // settings.config is jsonb, so every field (and nested field) may be missing.
@@ -38,6 +40,8 @@ export const DEFAULT_SETTINGS: Settings = {
   sunday_off_from: '14:00',
   rest_after_exam_min: 50,
   exam_defaults: { duration_min: 120, travel_before_min: 30, travel_after_min: 30 },
+  daily_limit_min: 0,
+  limit_off_dates: [],
 };
 
 export type FixedEvent = {
@@ -153,6 +157,7 @@ export type ScheduleOutput = { blocks: ProposedBlock[]; warnings: Warning[]; rep
 
 // Fixed namespace for scheduler block ids; changing it changes every auto block id.
 export const BLOCK_ID_NAMESPACE = '3b5d6f1e-8c2a-4e7b-9a41-5f0c2d8e6b13';
+const NOT_STUDY: BlockType[] = ['Rest', 'Review', 'Break', 'Fixed', 'Buffer']; // do not count toward the daily limit
 const NO_DUE_PRESSURE = 0.1; // spec 5: items without a due date get a low default
 const MAX_DAYS = 180; // shortcut: overload ignores items due more than 180 days out, raise if semesters get longer
 
@@ -179,7 +184,7 @@ function mergeSettings(s: SettingsInput = {}): Settings {
   for (const [k, v] of Object.entries(s)) {
     if (v === undefined || v === null) continue;
     const d = (DEFAULT_SETTINGS as Record<string, unknown>)[k];
-    out[k] = typeof d === 'object' && d !== null ? { ...d, ...(v as object) } : v;
+    out[k] = typeof d === 'object' && d !== null && !Array.isArray(d) ? { ...d, ...(v as object) } : v;
   }
   return out as Settings;
 }
@@ -261,12 +266,15 @@ export function schedule(input: ScheduleInput): ScheduleOutput {
     b.locked || b.source === 'claude' || b.status === 'done' || b.status === 'partial' || b.id === input.activeBlockId;
   const replacedBlockIds: string[] = [];
   const protectedBlocks: (Busy & { b: ExistingBlock })[] = [];
+  const studyByDate = new Map<string, number>(); // minutes toward the daily limit
+  const addStudy = (date: string, min: number) => studyByDate.set(date, (studyByDate.get(date) ?? 0) + min);
   for (const b of [...input.blocks].sort(byId)) {
     if (b.deleted_at || b.status === 'moved' || b.status === 'skipped') continue;
     const s = at(b.date, (b.start_time ?? b.start)!);
     const span = { s, e: at(b.date, (b.end_time ?? b.end)!), kind: 'block' as const, id: b.id };
     if (replaceable(b, s)) replacedBlockIds.push(b.id);
     else {
+      if (!NOT_STUDY.includes(b.type)) addStudy(b.date, (span.e - span.s) / MIN);
       hard.push(span);
       if (isProtected(b) && b.date >= firstDate && b.date < horizonEnd) protectedBlocks.push({ ...span, b });
     }
@@ -343,7 +351,8 @@ export function schedule(input: ScheduleInput): ScheduleOutput {
       continue;
     }
     const date = wall(t, tz).date;
-    if (wall(t + L - MIN, tz).date !== date) {
+    const overLimit = st.daily_limit_min > 0 && !st.limit_off_dates.includes(date) && (studyByDate.get(date) ?? 0) + studyMin > st.daily_limit_min;
+    if (wall(t + L - MIN, tz).date !== date || overLimit) {
       t = at(addDays(date, 1), '00:00');
       continue;
     }
@@ -388,6 +397,7 @@ export function schedule(input: ScheduleInput): ScheduleOutput {
         warnings.push({ w, t, item: pick.id, tie: '' });
       }
     }
+    addStudy(date, studyMin);
     streak.push(pick.course_id ?? '');
     run++;
     lastEnd = t + L;
