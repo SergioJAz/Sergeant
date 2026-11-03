@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { PanResponder, Pressable, View } from 'react-native';
 
 import { AgendaRow } from '@/components/AgendaRow';
 import { BlockEditor } from '@/components/BlockEditor';
@@ -9,16 +9,16 @@ import { FinishPanel } from '@/components/FinishPanel';
 import { KindMarker } from '@/components/KindMarker';
 import { Tour } from '@/components/Tour';
 import { fmtClock, fmtDur, kindTotals, plannedMin, type AgendaEntry } from '@/lib/agenda';
-import { blockEndMs, dayEntries, getTz } from '@/lib/domain';
+import { blockConflicts, blockEndMs, dayEntries, getTz } from '@/lib/domain';
 import { KINDS, KIND_LABEL } from '@/lib/kinds';
 import { useStore } from '@/lib/store';
 import { addDays, dayLabel, localDate, mondayOf, weekday, WEEKDAYS } from '@/lib/time';
 import type { Block } from '@/lib/types';
-import { Empty, interactive, Progress, Row, Screen, Section, SmallBtn, T, useNow, usePhone, useTheme, type PState } from '@/lib/ui';
+import { Banner, Empty, interactive, Progress, Row, Screen, Section, SmallBtn, T, useNow, usePhone, useTheme, type PState } from '@/lib/ui';
 import { columnsFor } from '@/theme/layout';
 
 export default function WeekScreen() {
-  const { data } = useStore();
+  const { data, write } = useStore();
   const t = useTheme();
   const now = useNow(30_000);
   const tz = getTz(data);
@@ -39,6 +39,36 @@ export default function WeekScreen() {
   const doneMin = entries.filter((e) => e.block?.status === 'done' || e.block?.status === 'partial').reduce((s, e) => s + e.end - e.start, 0);
   const totals = kindTotals(entries);
   const kinds = KINDS.filter((k) => totals[k] > 0);
+  // Drag a planned block to another day column (wide layout): same time, new date, locked so a replan keeps it there.
+  const cols = useRef<({ measureInWindow: (cb: (x: number, y: number, w: number) => void) => void } | null)[]>([]);
+  const rects = useRef<{ x: number; w: number }[]>([]);
+  const [drag, setDrag] = useState<{ block: Block; dx: number; dy: number; to: number } | null>(null);
+  const [moved, setMoved] = useState<string[]>([]); // conflict feedback after a drop (D01: shown, not blocked)
+  const start = useRef({ x: 0, y: 0 }); // responders are rebuilt each render, so positions come from the events, not gestureState
+  const colAt = (x: number) => rects.current.findIndex((r) => r && x >= r.x && x < r.x + r.w);
+  const dragFor = (b: Block) => PanResponder.create({
+    // react-native-web never offers a move to an ancestor once the card's Pressable holds the touch, so claim it at start
+    onStartShouldSetPanResponderCapture: () => true, // capture: the card's Pressable already holds the touch
+    onPanResponderGrant: (e) => {
+      start.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY };
+      cols.current.forEach((v, i) => v?.measureInWindow((x, _y, w) => { rects.current[i] = { x, w }; }));
+      setDrag({ block: b, dx: 0, dy: 0, to: days.indexOf(b.date) });
+    },
+    onPanResponderMove: (e) => {
+      const { pageX, pageY } = e.nativeEvent;
+      setDrag({ block: b, dx: pageX - start.current.x, dy: pageY - start.current.y, to: colAt(pageX) });
+    },
+    onPanResponderRelease: (e) => {
+      setDrag(null);
+      const to = days[colAt(e.nativeEvent.pageX)];
+      if (!to || to === b.date) return;
+      setMoved(blockConflicts(data, { ...b, date: to }));
+      setDay(to);
+      void write([{ entity: 'blocks', kind: 'update', row_id: b.id, payload: { date: to, locked: true } }]);
+    },
+    onPanResponderTerminate: () => setDrag(null),
+  });
+  const dragConflicts = drag && days[drag.to] && days[drag.to] !== drag.block.date ? blockConflicts(data, { ...drag.block, date: days[drag.to] }) : [];
 
   const shift = (n: number) => {
     setMonday(addDays(monday, n));
@@ -65,6 +95,13 @@ export default function WeekScreen() {
         <SmallBtn ghost title="Next" onPress={() => shift(7)} />
       </Row>
       <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ gap: 14 }}>
+        {dragConflicts.length || moved.length ? (
+          <Banner>
+            <T bold>{drag ? 'Dropping here clashes' : 'Moved, with clashes'}</T>
+            {(drag ? dragConflicts : moved).map((m) => <T key={m} muted>{m}</T>)}
+            {!drag ? <Row><SmallBtn ghost title="Dismiss" onPress={() => setMoved([])} /></Row> : null}
+          </Banner>
+        ) : null}
         {!wide ? <DayStrip start={monday} value={day} today={today} onChange={setDay} /> : null}
         <Section title={dayLabel(day)} right={
           <Row wrap><T muted size={13}>{fmtDur(plannedMin(selected))}</T><SmallBtn title="Add block" onPress={() => setEditing('new')} /></Row>
@@ -72,15 +109,21 @@ export default function WeekScreen() {
           {wide ? (
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
               {days.map((d, i) => (
-                <View key={d} style={{ flex: 1, minWidth: 0, gap: 8 }}>
+                <View key={d} ref={(v) => { cols.current[i] = v; }}
+                  style={{ flex: 1, minWidth: 0, gap: 8, borderRadius: t.radius, borderWidth: 1, borderStyle: 'dashed', borderColor: drag && drag.to === i ? (dragConflicts.length ? t.danger : t.primary) : 'transparent' }}>
                   <Pressable accessibilityRole="button" accessibilityLabel={`Select ${dayLabel(d)}`} accessibilityState={{ selected: d === day }} onPress={() => setDay(d)}
                     style={(st) => ({ minHeight: 44, gap: 2, padding: 4, borderRadius: t.radius, borderWidth: 1, borderColor: d === day ? t.line : 'transparent', ...interactive(t, st as PState) })}>
                     <T size={13} muted>{WEEKDAYS[weekday(d)]}</T>
                     <T size={20} bold color={d === today ? t.primary : t.text}>{Number(d.slice(8))}</T>
                     <T size={12} muted>{fmtDur(plannedMin(entriesByDay[i]))}</T>
                   </Pressable>
-                  {entriesByDay[i].map((e) => (
-                    <View key={e.key} style={{ backgroundColor: t.surface, borderRadius: t.radius }}>
+                  {entriesByDay[i].map((e) => {
+                    const b = e.block;
+                    const movable = b && b.status === 'planned' && b.type !== 'Fixed';
+                    const lifted = drag && b && drag.block.id === b.id;
+                    return (
+                    <View key={e.key} {...(movable ? dragFor(b).panHandlers : null)}
+                      style={{ backgroundColor: t.surface, borderRadius: t.radius, ...(lifted ? { transform: [{ translateX: drag.dx }, { translateY: drag.dy }], zIndex: 10, opacity: 0.85 } : null) }}>
                       <Pressable accessibilityRole={e.block ? 'button' : undefined} disabled={!e.block} onPress={() => openCard(e)}
                         style={(st) => ({ minHeight: 44, padding: 8, gap: 4, borderRadius: t.radius, backgroundColor: e.kind ? `${t[e.kind]}29` : t.surface2,
                           ...(e.block ? interactive(t, st as PState) : null), opacity: (e.finished ? 0.5 : 1) * (st.pressed ? 0.8 : 1) })}>
@@ -89,7 +132,8 @@ export default function WeekScreen() {
                         <T size={12} muted>{fmtDur(e.end - e.start)}</T>
                       </Pressable>
                     </View>
-                  ))}
+                    );
+                  })}
                 </View>
               ))}
             </View>
