@@ -95,8 +95,9 @@ test('overLimit lists the latest auto study blocks past the cap, never hand-plac
   const b = (id: string, s: string, e: string, extra: Partial<Block> = {}) =>
     ({ id, start_time: s, end_time: e, type: 'Notes', source: 'auto', status: 'planned', locked: false, ...extra }) as unknown as Block;
   const blocks = [b('a', '09:00', '10:00', { status: 'done' }), b('r', '10:00', '10:30', { type: 'Break' }), b('m', '11:00', '12:00', { source: 'manual' }), b('c', '13:00', '14:00'), b('d', '15:00', '16:00')];
-  assert.deepEqual(overLimit(blocks, 240), { total: 240, moves: [] });
-  const { total, moves } = overLimit(blocks, 150); // 90 min over: d, then c
+  assert.deepEqual(overLimit(blocks, 240, 0), { total: 240, moves: [] });
+  const { total, moves } = overLimit(blocks, 150, 0); // 90 min over: d, then c
   assert.equal(total, 240);
   assert.deepEqual(moves.map((x) => x.id), ['c', 'd']);
+  assert.deepEqual(overLimit(blocks, 150, 14 * 60).moves.map((x) => x.id), ['d']); // c already ended
 });

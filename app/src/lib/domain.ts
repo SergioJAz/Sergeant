@@ -62,7 +62,8 @@ export function blockMinutes(b: Pick<Block, 'start_time' | 'end_time'>) {
 
 export function fixedOn(data: Data, date: string): FixedEvent[] {
   const wd = weekday(date);
-  if (getConfig(data).fixed_off_dates.includes(date)) return [];
+  // only while that day off still exists, so deleting the day off anywhere brings the fixed times back
+  if (getConfig(data).fixed_off_dates.includes(date) && data.oneoff_blocks.some((o) => o.date === date && o.kind === 'off')) return [];
   return data.fixed_events.filter(
     (f) => f.weekdays.map((w) => w % 7).includes(wd) && (!f.valid_from || f.valid_from <= date) && (!f.valid_to || f.valid_to >= date)
   );

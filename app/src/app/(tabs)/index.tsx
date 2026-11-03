@@ -63,7 +63,7 @@ export default function TodayScreen() {
   const doneMin = data.time_logs.filter((l) => !l.deleted_at && localDate(Date.parse(l.started_at), tz) === today).reduce((s, l) => s + l.actual_min, 0);
   const diff = doneMin - dueMin;
   // Work limit (Settings): study planned today against the cap; Keep going lifts it for today and replans.
-  const limit = overLimit(blocks, cfg.daily_limit_min);
+  const limit = overLimit(blocks, cfg.daily_limit_min, hmToMin(localHM(now, tz)));
   const limitOn = cfg.daily_limit_min > 0 && !cfg.limit_off_dates.includes(today);
   function keepGoing() {
     void write([configOp(data, { limit_off_dates: [...cfg.limit_off_dates.filter((d) => d >= addDays(today, -14)), today] })]).then(() => router.push('/plan'));
