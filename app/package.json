@@ -49,7 +49,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "node --test \"src/**/*.test.ts\" ../scripts/pwa-worker.test.mjs",
+    "test": "node --test \"src/**/*.test.ts\" \"cli/**/*.test.ts\" ../scripts/pwa-worker.test.mjs",
+    "cli": "node cli/sergeant.ts",
     "check:emdash": "node ../scripts/check-em-dash.mjs",
     "build:web": "node ../scripts/check-em-dash.mjs && expo export -p web && node ../scripts/build-pwa.mjs",
     "eas-build-pre-install": "node ../scripts/check-em-dash.mjs"
