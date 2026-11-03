@@ -7,6 +7,7 @@ import { BlockEditor } from '@/components/BlockEditor';
 import { DayStrip } from '@/components/DayStrip';
 import { FinishPanel } from '@/components/FinishPanel';
 import { KindMarker } from '@/components/KindMarker';
+import { Tour } from '@/components/Tour';
 import { fmtClock, fmtDur, kindTotals, plannedMin, type AgendaEntry } from '@/lib/agenda';
 import { blockEndMs, dayEntries, getTz } from '@/lib/domain';
 import { KINDS, KIND_LABEL } from '@/lib/kinds';
@@ -108,6 +109,7 @@ export default function WeekScreen() {
       </View>
       {editing ? <BlockEditor block={editing === 'new' ? null : editing} date={day} onClose={() => setEditing(null)} /> : null}
       {finishing ? <FinishPanel block={finishing} onClose={() => setFinishing(null)} /> : null}
+      <Tour id="week" steps={[{ title: 'Your week', body: 'Every day at a glance, with how much is planned and done. Tap a block to edit or move it.' }]} />
     </Screen>
   );
 }

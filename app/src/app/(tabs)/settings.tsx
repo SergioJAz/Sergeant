@@ -6,6 +6,7 @@ import { useThemeSections } from '@/components/appearance/ThemeSettings';
 import { LayoutSection, NavSection, TextSection } from '@/components/appearance/LayoutSettings';
 import { Columns } from '@/components/Columns';
 import { SyncStatus } from '@/components/SyncStatus';
+import { resetTours } from '@/components/Tour';
 import { useAuth } from '@/lib/auth';
 import { DEFAULT_CONFIG, getConfig, getTz, timerElapsed } from '@/lib/domain';
 import { saveFile } from '@/lib/files';
@@ -191,6 +192,7 @@ export default function SettingsScreen() {
             <SmallBtn title="Import / Export" onPress={() => router.push('/io')} />
             <SmallBtn title="Archive" onPress={() => router.push('/archive')} />
             <SmallBtn title="Plan my week" onPress={() => router.push('/plan')} />
+            <SmallBtn title="Show tips again" onPress={() => void resetTours()} />
           </Row>,
           <Card key="account">
             <H size={17}>Account</H>
