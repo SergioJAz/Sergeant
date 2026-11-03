@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { PanResponder, Pressable, View } from 'react-native';
+import { PanResponder, Platform, Pressable, View } from 'react-native';
 
 import { AgendaRow } from '@/components/AgendaRow';
 import { BlockEditor } from '@/components/BlockEditor';
@@ -47,16 +47,20 @@ export default function WeekScreen() {
   const start = useRef({ x: 0, y: 0 }); // responders are rebuilt each render, so positions come from the events, not gestureState
   const colAt = (x: number) => rects.current.findIndex((r) => r && x >= r.x && x < r.x + r.w);
   const dragFor = (b: Block) => PanResponder.create({
-    // react-native-web never offers a move to an ancestor once the card's Pressable holds the touch, so claim it at start
-    onStartShouldSetPanResponderCapture: () => true, // capture: the card's Pressable already holds the touch
+    // react-native-web never offers a move to an ancestor once the card's Pressable holds the touch, so claim it at start;
+    // native does ask ancestors on move, and only a sideways move is taken so vertical scrolling still works.
+    ...(Platform.OS === 'web'
+      ? { onStartShouldSetPanResponderCapture: () => true }
+      : { onMoveShouldSetPanResponderCapture: (_: unknown, g: { dx: number; dy: number }) => Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy) }),
     onPanResponderGrant: (e) => {
       start.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY };
       cols.current.forEach((v, i) => v?.measureInWindow((x, _y, w) => { rects.current[i] = { x, w }; }));
-      setDrag({ block: b, dx: 0, dy: 0, to: days.indexOf(b.date) });
+      setMoved([]);
     },
     onPanResponderMove: (e) => {
       const { pageX, pageY } = e.nativeEvent;
-      setDrag({ block: b, dx: pageX - start.current.x, dy: pageY - start.current.y, to: colAt(pageX) });
+      const dx = pageX - start.current.x, dy = pageY - start.current.y;
+      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) setDrag({ block: b, dx, dy, to: colAt(pageX) }); // a tap re-renders nothing
     },
     onPanResponderRelease: (e) => {
       setDrag(null);
@@ -71,6 +75,7 @@ export default function WeekScreen() {
   const dragConflicts = drag && days[drag.to] && days[drag.to] !== drag.block.date ? blockConflicts(data, { ...drag.block, date: days[drag.to] }) : [];
 
   const shift = (n: number) => {
+    setMoved([]);
     setMonday(addDays(monday, n));
     setDay(addDays(day, n));
   };
@@ -119,7 +124,7 @@ export default function WeekScreen() {
                   </Pressable>
                   {entriesByDay[i].map((e) => {
                     const b = e.block;
-                    const movable = b && b.status === 'planned' && b.type !== 'Fixed';
+                    const movable = b && b.status === 'planned' && b.type !== 'Fixed' && b.id !== data.active_timer[0]?.block_id;
                     const lifted = drag && b && drag.block.id === b.id;
                     return (
                     <View key={e.key} {...(movable ? dragFor(b).panHandlers : null)}
