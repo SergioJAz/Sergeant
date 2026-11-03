@@ -15,7 +15,7 @@ import { TodaySide } from '@/components/TodaySide';
 import { TodoList } from '@/components/TodoList';
 import { Tour } from '@/components/Tour';
 import { configOp, moveBlock } from '@/lib/actions';
-import { dayBounds, fmtClock, fmtDur, freeGaps, plannedMin, withGaps } from '@/lib/agenda';
+import { dayBounds, fmtClock, fmtDur, freeGaps, overLimit, plannedMin, withGaps } from '@/lib/agenda';
 import { blockEndMs, blockMinutes, blockStartMs, blocksOn, busyOn, dayEntries, getConfig, getTz } from '@/lib/domain';
 import { requestPermission, useNotifyState } from '@/lib/notify';
 import { useStore } from '@/lib/store';
@@ -63,7 +63,7 @@ export default function TodayScreen() {
   const doneMin = data.time_logs.filter((l) => !l.deleted_at && localDate(Date.parse(l.started_at), tz) === today).reduce((s, l) => s + l.actual_min, 0);
   const diff = doneMin - dueMin;
   // Work limit (Settings): study planned today against the cap; Keep going lifts it for today and replans.
-  const studyMin = blocks.filter((b) => !['Rest', 'Review', 'Break', 'Fixed', 'Buffer'].includes(b.type) && b.status !== 'skipped').reduce((s, b) => s + blockMinutes(b), 0); // same as the scheduler's NOT_STUDY
+  const limit = overLimit(blocks, cfg.daily_limit_min);
   const limitOn = cfg.daily_limit_min > 0 && !cfg.limit_off_dates.includes(today);
   function keepGoing() {
     void write([configOp(data, { limit_off_dates: [...cfg.limit_off_dates.filter((d) => d >= addDays(today, -14)), today] })]).then(() => router.push('/plan'));
@@ -151,9 +151,19 @@ export default function TodayScreen() {
         </Banner>
       ) : null}
       <T muted size={13}>{`Logged ${fmtDur(doneMin)} today · ${fmtDur(Math.abs(diff))} ${diff >= 0 ? 'ahead' : 'behind'}`}</T>
-      {limitOn ? (
+      {limitOn && limit.moves.length ? (
+        <Card tone="warn">
+          <T bold>You've hit your limit for today</T>
+          <T muted>{`${fmtDur(limit.total)} of study planned, limit ${fmtDur(cfg.daily_limit_min)}. Replanning moves these to later days:`}</T>
+          {limit.moves.map((b) => <T key={b.id}>{clock(hmToMin(b.start_time))} {course(b.course_id)} {b.what ?? b.type}</T>)}
+          <Row wrap>
+            <SmallBtn filled title="Move them" onPress={() => router.push('/plan')} />
+            <SmallBtn title="Keep going today" onPress={keepGoing} />
+          </Row>
+        </Card>
+      ) : limitOn ? (
         <Row wrap>
-          <T muted size={13}>{`Work limit: ${fmtDur(studyMin)} of ${fmtDur(cfg.daily_limit_min)} planned`}</T>
+          <T muted size={13}>{`Work limit: ${fmtDur(limit.total)} of ${fmtDur(cfg.daily_limit_min)} planned`}</T>
           <SmallBtn ghost title="Keep going today" onPress={keepGoing} />
         </Row>
       ) : null}

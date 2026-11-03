@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTimeline, dayBounds, fmtClock, fmtDur, freeGaps, kindDots, kindTotals, nowState, plannedMin, withGaps, type AgendaEntry } from './agenda.ts';
+import { buildTimeline, dayBounds, fmtClock, fmtDur, freeGaps, kindDots, kindTotals, nowState, overLimit, plannedMin, withGaps, type AgendaEntry } from './agenda.ts';
 import type { Block } from './types.ts';
 
 const hm = (s: string) => Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5));
@@ -89,4 +89,14 @@ test('fmtClock and fmtDur', () => {
   assert.equal(fmtClock(hm('14:40'), false), '2:40pm');
   assert.equal(fmtClock(1440, false), '12:00am');
   assert.deepEqual([0, 45, 60, 90, 375].map(fmtDur), ['0m', '45m', '1h', '1h 30m', '6h 15m']);
+});
+
+test('overLimit lists the latest auto study blocks past the cap, never hand-placed or done ones', () => {
+  const b = (id: string, s: string, e: string, extra: Partial<Block> = {}) =>
+    ({ id, start_time: s, end_time: e, type: 'Notes', source: 'auto', status: 'planned', locked: false, ...extra }) as unknown as Block;
+  const blocks = [b('a', '09:00', '10:00', { status: 'done' }), b('r', '10:00', '10:30', { type: 'Break' }), b('m', '11:00', '12:00', { source: 'manual' }), b('c', '13:00', '14:00'), b('d', '15:00', '16:00')];
+  assert.deepEqual(overLimit(blocks, 240), { total: 240, moves: [] });
+  const { total, moves } = overLimit(blocks, 150); // 90 min over: d, then c
+  assert.equal(total, 240);
+  assert.deepEqual(moves.map((x) => x.id), ['c', 'd']);
 });
