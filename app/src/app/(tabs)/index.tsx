@@ -80,7 +80,10 @@ export default function TodayScreen() {
   // First free slot after now today for a missed block (nearest buffer first, else first gap).
   const claimed: { start: number; end: number }[] = []; // so two missed blocks never get the same slot
   function nextSlot(len: number) {
-    const buffer = blocks.find((b) => b.type === 'Buffer' && b.status === 'planned' && blockStartMs(b, tz) > now && !claimed.some((c) => c.start === hmToMin(b.start_time)));
+    // a buffer already holding a moved block, or claimed by another missed block, is not free
+    const used = (b: Block) => claimed.some((c) => c.start === hmToMin(b.start_time)) || blocks.some((o) => o.type !== 'Buffer' && o.status !== 'skipped'
+      && hmToMin(o.start_time) < hmToMin(b.end_time) && hmToMin(o.end_time) > hmToMin(b.start_time));
+    const buffer = blocks.find((b) => b.type === 'Buffer' && b.status === 'planned' && blockStartMs(b, tz) > now && !used(b));
     if (buffer) {
       const s = hmToMin(buffer.start_time);
       claimed.push({ start: s, end: s + len });
