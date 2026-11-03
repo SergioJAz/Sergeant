@@ -184,3 +184,19 @@ test('item-less block ids differ per owner; study block ids do not', () => {
   assert.deepEqual(ids(a, true), ids(b, true));
   for (const id of ids(a, false)) assert.ok(!ids(b, false).includes(id), 'two accounts never share a primary key');
 });
+
+test('daily limit caps study minutes per day; limit_off_dates lifts it for that day', () => {
+  const input = { ...fx('03').input, oneoffs: [] };
+  const perDay = (r: ReturnType<typeof schedule>) => {
+    const m = new Map<string, number>();
+    for (const b of study(r)) m.set(b.date, (m.get(b.date) ?? 0) + hmToMin(b.end_time) - hmToMin(b.start_time));
+    return m;
+  };
+  const free = perDay(schedule(input));
+  const first = [...free.keys()].sort()[0];
+  assert.ok(free.get(first)! > 100, 'fixture must plan more than 100 min on its first day');
+  const capped = perDay(schedule({ ...input, settings: { ...input.settings, daily_limit_min: 100 } }));
+  for (const [d, m] of capped) assert.ok(m <= 100, `${d} has ${m} min`);
+  const lifted = perDay(schedule({ ...input, settings: { ...input.settings, daily_limit_min: 100, limit_off_dates: [first] } }));
+  assert.equal(lifted.get(first), free.get(first));
+});
