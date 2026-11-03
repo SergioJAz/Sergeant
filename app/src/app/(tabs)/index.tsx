@@ -29,6 +29,8 @@ export default function TodayScreen() {
   const tz = getTz(data);
   const cfg = getConfig(data);
   const today = localDate(now, tz);
+  const [offset, setOffset] = useState(0); // days away from today shown in the agenda
+  const day = addDays(today, offset);
   const [editing, setEditing] = useState<Block | 'new' | Slot | null>(null);
   const [finishing, setFinishing] = useState<{ block: Block; outcome?: 'done' | 'partial' | 'skipped' } | null>(null);
   const notify = useNotifyState();
@@ -69,12 +71,25 @@ export default function TodayScreen() {
   }
 
   const nowMin = hmToMin(localHM(now, tz));
-  const entries = dayEntries(data, today);
+  const isToday = offset === 0;
+  const entries = dayEntries(data, day);
   const bounds = dayBounds(hmToMin(cfg.wake), hmToMin(cfg.hard_stop), entries);
-  const shown = nowFocus(entries, nowMin).current; // already on the Now card, so not repeated in the list
-  const rest = withGaps(entries.filter((e) => e !== shown), freeGaps(entries, Math.max(bounds.start, Math.ceil(nowMin / 5) * 5), bounds.end));
+  const shown = isToday ? nowFocus(entries, nowMin).current : undefined; // already on the Now card, so not repeated in the list
+  // Gaps are only offered where time is still ahead: after now today, the whole day later, none on past days.
+  const gapFrom = isToday ? Math.max(bounds.start, Math.ceil(nowMin / 5) * 5) : offset > 0 ? bounds.start : bounds.end;
+  const rest = withGaps(entries.filter((e) => e !== shown), freeGaps(entries, gapFrom, bounds.end));
   const clock = (m: number) => fmtClock(m, t.clock24);
-  const shortDate = new Intl.DateTimeFormat('en-GB', { timeZone: tz, weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(now)).replace(',', '');
+  // day is a plain YYYY-MM-DD, so format it at UTC noon to keep the calendar date.
+  const fmtDay = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', ...opts }).format(new Date(`${day}T12:00:00Z`));
+  const shortDate = fmtDay({ weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '');
+  const title = isToday ? 'Today' : offset === 1 ? 'Tomorrow' : offset === -1 ? 'Yesterday' : fmtDay({ weekday: 'long' });
+  const dayNav = (
+    <Row>
+      <SmallBtn title="←" label="Previous day" onPress={() => setOffset(offset - 1)} />
+      {isToday ? null : <SmallBtn filled title="Today" onPress={() => setOffset(0)} />}
+      <SmallBtn title="→" label="Next day" onPress={() => setOffset(offset + 1)} />
+    </Row>
+  );
 
   const rightNow = (
     <Section key="now" title="Right now">
@@ -115,7 +130,7 @@ export default function TodayScreen() {
   );
 
   const restOfToday = (
-    <Section key="rest" title="Rest of today" right={<SmallBtn title="Add block" onPress={() => setEditing('new')} />}>
+    <Section key="rest" title={isToday ? 'Rest of today' : 'Plan'} right={<SmallBtn title="Add block" onPress={() => setEditing('new')} />}>
       {entries.length ? (
         <View>
           {rest.map((x) =>
@@ -128,7 +143,7 @@ export default function TodayScreen() {
           )}
         </View>
       ) : (
-        <Empty title="Nothing planned today" body="Add a block, or let Sergeant plan your week." action={<Row><SmallBtn title="Plan my week" onPress={() => router.push('/plan')} /></Row>} />
+        <Empty title={isToday ? 'Nothing planned today' : 'Nothing planned'}body="Add a block, or let Sergeant plan your week." action={<Row><SmallBtn title="Plan my week" onPress={() => router.push('/plan')} /></Row>} />
       )}
     </Section>
   );
@@ -136,9 +151,10 @@ export default function TodayScreen() {
   const slot = editing && editing !== 'new' && 'start' in editing ? editing : undefined;
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <Screen wide subtitle={shortDate} title="Today"
-        right={phone ? <SyncStatus quiet /> :
+      <Screen wide subtitle={shortDate} title={title}
+        right={phone ? <Row>{dayNav}<SyncStatus quiet /></Row> :
           <Row style={{ alignItems: 'flex-end' }}>
+            {dayNav}
             <View style={{ alignItems: 'flex-end' }}>
               <T muted size={13}>{clock(bounds.start)} → <T bold muted size={13}>{clock(bounds.end)}</T></T>
               <T muted size={13}>{`${fmtDur(plannedMin(entries))} planned`}</T>
@@ -146,10 +162,11 @@ export default function TodayScreen() {
             <SyncStatus />
           </Row>
         }>
-        <Columns sections={[rightNow, restOfToday, <TodoList key="todo" />, <TodaySide key="side" today={today} />]} plan={{ 1: [0, 1, 2], 2: [[0, 3, 2], [1]], 3: [[0, 2], [1], [3]] }} />
+        {/* Right now only means something today; other days keep the slot so the column plan stays the same. */}
+        <Columns sections={[isToday ? rightNow : <View key="now" />, restOfToday, <TodoList key="todo" />, <TodaySide key="side" today={day} />]} plan={{ 1: [0, 1, 2], 2: [[0, 3, 2], [1]], 3: [[0, 2], [1], [3]] }} />
       </Screen>
 
-      {editing ? <BlockEditor block={editing === 'new' || slot ? null : (editing as Block)} slot={slot} date={today} onClose={() => setEditing(null)} /> : null}
+      {editing ? <BlockEditor block={editing === 'new' || slot ? null : (editing as Block)} slot={slot} date={day}onClose={() => setEditing(null)} /> : null}
       {finishing ? <FinishPanel block={finishing.block} initial={finishing.outcome} onClose={() => setFinishing(null)} /> : null}
     </View>
   );
