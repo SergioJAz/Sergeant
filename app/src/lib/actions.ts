@@ -6,6 +6,15 @@ import type { ActiveTimer, Block, Data, Item } from './types';
 
 type Write = (ops: WriteInput[]) => Promise<string[]>;
 
+// One op that merges patch into the stored config; a new account has no settings row yet, so it inserts one.
+export function configOp(data: Data, patch: Record<string, unknown>, tz?: string): WriteInput {
+  const row = data.settings[0];
+  const config = { ...(row?.config ?? {}), ...patch };
+  return row
+    ? { entity: 'settings', kind: 'update', row_id: row.id, payload: { config, ...(tz ? { timezone: tz } : {}) } }
+    : { entity: 'settings', kind: 'insert', payload: { config, timezone: tz ?? 'Asia/Beirut' } };
+}
+
 export function startTimer(write: Write, block: Block, deviceId: string, phase: 'study' | 'break' = 'study', targetMin?: number) {
   const id = uuid();
   return write([{

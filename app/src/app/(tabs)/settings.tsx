@@ -7,6 +7,7 @@ import { LayoutSection, NavSection, TextSection } from '@/components/appearance/
 import { Columns } from '@/components/Columns';
 import { SyncStatus } from '@/components/SyncStatus';
 import { resetTours } from '@/components/Tour';
+import { configOp } from '@/lib/actions';
 import { useAuth } from '@/lib/auth';
 import { DEFAULT_CONFIG, getConfig, getTz, timerElapsed } from '@/lib/domain';
 import { saveFile } from '@/lib/files';
@@ -36,10 +37,7 @@ export default function SettingsScreen() {
   useEffect(() => setR(toForm(cfg, getTz(data))), [settings?.rev]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function saveConfig(patch: Record<string, unknown>, tz?: string) {
-    const config = { ...(settings?.config ?? {}), ...patch };
-    await write([settings
-      ? { entity: 'settings', kind: 'update', row_id: settings.id, payload: { config, ...(tz ? { timezone: tz } : {}) } }
-      : { entity: 'settings', kind: 'insert', payload: { config, timezone: tz ?? 'Asia/Beirut' } }]);
+    await write([configOp(data, patch, tz)]);
   }
 
   async function saveRules() {

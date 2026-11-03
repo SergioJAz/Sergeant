@@ -17,6 +17,7 @@ export const DEFAULT_CONFIG = {
   horizon_days: 7,
   daily_limit_min: 0, // 0 = no daily study limit
   limit_off_dates: [] as string[], // days "Keep going today" lifted the limit
+  fixed_off_dates: [] as string[], // days off that also drop the fixed times
   notify: { block_start: true, block_end: true, break_end: true, summary: true, deadline: true, overload: true, nag: true, deadline_days: [7, 3, 1] },
 };
 export type Config = typeof DEFAULT_CONFIG;
@@ -61,6 +62,7 @@ export function blockMinutes(b: Pick<Block, 'start_time' | 'end_time'>) {
 
 export function fixedOn(data: Data, date: string): FixedEvent[] {
   const wd = weekday(date);
+  if (getConfig(data).fixed_off_dates.includes(date)) return [];
   return data.fixed_events.filter(
     (f) => f.weekdays.map((w) => w % 7).includes(wd) && (!f.valid_from || f.valid_from <= date) && (!f.valid_to || f.valid_to >= date)
   );

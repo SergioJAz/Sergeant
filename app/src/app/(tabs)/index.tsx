@@ -14,7 +14,7 @@ import { TimerCard } from '@/components/TimerCard';
 import { TodaySide } from '@/components/TodaySide';
 import { TodoList } from '@/components/TodoList';
 import { Tour } from '@/components/Tour';
-import { moveBlock } from '@/lib/actions';
+import { configOp, moveBlock } from '@/lib/actions';
 import { dayBounds, fmtClock, fmtDur, freeGaps, plannedMin, withGaps } from '@/lib/agenda';
 import { blockEndMs, blockMinutes, blockStartMs, blocksOn, busyOn, dayEntries, getConfig, getTz } from '@/lib/domain';
 import { requestPermission, useNotifyState } from '@/lib/notify';
@@ -66,10 +66,15 @@ export default function TodayScreen() {
   const studyMin = blocks.filter((b) => !['Rest', 'Review', 'Break', 'Fixed', 'Buffer'].includes(b.type) && b.status !== 'skipped').reduce((s, b) => s + blockMinutes(b), 0); // same as the scheduler's NOT_STUDY
   const limitOn = cfg.daily_limit_min > 0 && !cfg.limit_off_dates.includes(today);
   function keepGoing() {
-    const row = data.settings[0];
-    if (!row) return;
-    const config = { ...row.config, limit_off_dates: [...cfg.limit_off_dates.filter((d) => d >= addDays(today, -14)), today] };
-    void write([{ entity: 'settings', kind: 'update', row_id: row.id, payload: { config } }]).then(() => router.push('/plan'));
+    void write([configOp(data, { limit_off_dates: [...cfg.limit_off_dates.filter((d) => d >= addDays(today, -14)), today] })]).then(() => router.push('/plan'));
+  }
+
+  function undoDayOff() {
+    void write([
+      { entity: 'oneoff_blocks', kind: 'delete', row_id: dayOff!.id },
+      // the day off may also have hidden the fixed times; bring them back
+      ...(cfg.fixed_off_dates.includes(today) ? [configOp(data, { fixed_off_dates: cfg.fixed_off_dates.filter((d) => d !== today) })] : []),
+    ]).then(() => router.push('/plan'));
   }
 
   // First free slot after now today for a missed block (nearest buffer first, else first gap).
@@ -128,7 +133,7 @@ export default function TodayScreen() {
           <T bold>Day off</T>
           <T muted>Rest today. Accept the new plan to move today's work to later this week.</T>
           <Row><SmallBtn filled title="Review plan" onPress={() => router.push('/plan')} /></Row>
-          <Row><SmallBtn title="Undo day off" onPress={() => void write([{ entity: 'oneoff_blocks', kind: 'delete', row_id: dayOff.id }]).then(() => router.push('/plan'))} /></Row>
+          <Row><SmallBtn title="Undo day off" onPress={undoDayOff} /></Row>
         </Banner>
       ) : timer ? null : (
         <Row>
