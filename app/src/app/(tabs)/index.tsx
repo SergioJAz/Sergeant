@@ -11,6 +11,7 @@ import { SyncStatus } from '@/components/SyncStatus';
 import { TimerCard } from '@/components/TimerCard';
 import { TodaySide } from '@/components/TodaySide';
 import { TodoList } from '@/components/TodoList';
+import { Tour } from '@/components/Tour';
 import { moveBlock } from '@/lib/actions';
 import { dayBounds, fmtClock, fmtDur, freeGaps, plannedMin, withGaps } from '@/lib/agenda';
 import { blockEndMs, blockMinutes, blockStartMs, blocksOn, busyOn, dayEntries, getConfig, getTz } from '@/lib/domain';
@@ -168,6 +169,11 @@ export default function TodayScreen() {
 
       {editing ? <BlockEditor block={editing === 'new' || slot ? null : (editing as Block)} slot={slot} date={day}onClose={() => setEditing(null)} /> : null}
       {finishing ? <FinishPanel block={finishing.block} initial={finishing.outcome} onClose={() => setFinishing(null)} /> : null}
+      <Tour id="today" steps={[
+        { title: 'Welcome to Sergeant', body: 'Today shows what to do right now and the rest of your day. The arrows at the top let you look at other days.' },
+        { title: 'Plan your week', body: 'Add courses and deadlines in Projects, then tap Plan my week. Sergeant fits study blocks around your fixed events.' },
+        { title: 'Log as you go', body: 'When a block ends, mark it done, partial or skipped. Missed blocks show up here so you can move them.' },
+      ]} />
     </View>
   );
 }

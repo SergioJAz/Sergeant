@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { Columns } from '@/components/Columns';
 import { KindMarker } from '@/components/KindMarker';
+import { Tour } from '@/components/Tour';
 import { examOps } from '@/lib/actions';
 import { activeChunks, estMin, fmtDue, getTz, ITEM_TYPES, parseDue, pressure, remainingMin } from '@/lib/domain';
 import { useStore, uuid } from '@/lib/store';
@@ -121,6 +122,7 @@ export default function ProjectsScreen() {
     <Screen wide subtitle="Uni and your own stuff" title="Projects" right={<SmallBtn ghost title="Archive" onPress={() => router.push('/archive')} />}>
       <Columns sections={quickAddSection ? [uni, quickAddSection] : [uni]} plan={{ 2: quickAddSection ? [[0], [1]] : [[0]], 3: quickAddSection ? [[0], [1]] : [[0]] }} />
       {err ? <Text accessibilityRole="alert" style={{ color: t.danger, fontWeight: '600' }}>{err}</Text> : null}
+      <Tour id="projects" steps={[{ title: 'Projects', body: 'Courses, exams and assignments live here. Give something a deadline and an estimate, and Sergeant plans study time for it.' }]} />
     </Screen>
   );
 }
