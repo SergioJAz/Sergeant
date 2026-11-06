@@ -13,8 +13,8 @@ This analysis evaluates the specification, rather than confirming implementation
 
 Sources:
 
-- `C:/Users/sraz4/Documents/Code/Tracker/Study_Helper_App_Spec.md`
-- `C:/Users/sraz4/Documents/Code/Tracker/Study_Helper_App_Spec.pdf`
+- `Study_Helper_App_Spec.md`
+- `Study_Helper_App_Spec.pdf`
 
 Section references below use Markdown numbering, from section 0 through section 13.
 The PDF numbers corresponding sections from 1 through 14.
