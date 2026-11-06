@@ -7,10 +7,13 @@
 //
 // ops.json: [{ "entity": "items", "kind": "insert" | "update" | "delete", "row_id"?: "<uuid>", "base_rev"?: <rev from list>, "payload"?: {...} }]
 // Give base_rev to have the server flag a conflict if the app changed the row (time logs, block/chunk status) since you read it.
-// Sign-in: SERGEANT_EMAIL and SERGEANT_PASSWORD from your shell, never from a file in the repo.
+// Sign-in: run `npm run cli -- login` once with SERGEANT_EMAIL and SERGEANT_PASSWORD set in your shell.
+// It saves a refresh token at ~/.sergeant/cli-token, so later commands (and agents) need no password. `logout` deletes it.
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { dirname, join } from 'node:path';
 
 import { EMPTY } from '../src/lib/types.ts';
 
@@ -37,7 +40,7 @@ export function validateOps(raw: unknown): OpIn[] {
   return raw;
 }
 
-async function client() {
+async function client(login = false) {
   try {
     process.loadEnvFile(new URL('../.env', import.meta.url));
   } catch {
@@ -48,11 +51,36 @@ async function client() {
   const email = process.env.SERGEANT_EMAIL;
   const password = process.env.SERGEANT_PASSWORD;
   if (!url || !key) fail('Missing EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY (app/.env).');
-  if (!email || !password) fail('Set SERGEANT_EMAIL and SERGEANT_PASSWORD in your shell to sign in.');
   const sb = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  if (error) fail(`Sign-in failed: ${error.message}`);
+  const saved = readToken();
+  if (!login && saved) {
+    // Supabase rotates refresh tokens: each use returns a new one, which replaces the saved one.
+    const { data, error } = await sb.auth.refreshSession({ refresh_token: saved });
+    if (error || !data.session) fail(`Saved login no longer works (${error?.message ?? 'no session'}). Run: npm run cli -- login`);
+    saveToken(data.session.refresh_token);
+    return sb;
+  }
+  if (!email || !password) fail('Not logged in. Set SERGEANT_EMAIL and SERGEANT_PASSWORD in your shell, then run: npm run cli -- login');
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error || !data.session) fail(`Sign-in failed: ${error?.message ?? 'no session'}`);
+  if (login) saveToken(data.session.refresh_token);
   return sb;
+}
+
+// Saved login for agents: a refresh token in the user's home folder, never in the repo. SERGEANT_TOKEN_FILE overrides the path.
+export const tokenFile = () => process.env.SERGEANT_TOKEN_FILE || join(homedir(), '.sergeant', 'cli-token');
+
+export function readToken(): string | null {
+  try {
+    return readFileSync(tokenFile(), 'utf8').trim() || null;
+  } catch {
+    return null; // no saved login yet
+  }
+}
+
+export function saveToken(token: string) {
+  mkdirSync(dirname(tokenFile()), { recursive: true });
+  writeFileSync(tokenFile(), token, { mode: 0o600 });
 }
 
 async function list(sb: Awaited<ReturnType<typeof client>>, table: string, filters: string[]) {
@@ -75,6 +103,14 @@ async function list(sb: Awaited<ReturnType<typeof client>>, table: string, filte
 async function main() {
   const [cmd, ...args] = process.argv.slice(2);
   if (cmd === 'tables') return console.log(TABLES.join('\n'));
+  if (cmd === 'login') {
+    await client(true);
+    return console.log(`Logged in. Saved login: ${tokenFile()}`);
+  }
+  if (cmd === 'logout') {
+    rmSync(tokenFile(), { force: true });
+    return console.log('Saved login removed.');
+  }
   if (cmd === 'list') {
     if (!args[0]) fail('Usage: list <table> [field=value ...]');
     const sb = await client();
@@ -110,7 +146,7 @@ async function main() {
     if ((data as { status: string }[]).some((r) => r.status !== 'applied')) process.exit(2);
     return;
   }
-  fail('Commands: tables | list <table> [field=value ...] | write <ops.json | -> [--dry-run]');
+  fail('Commands: login | logout | tables | list <table> [field=value ...] | write <ops.json | -> [--dry-run]');
 }
 
 if (import.meta.main) await main();
