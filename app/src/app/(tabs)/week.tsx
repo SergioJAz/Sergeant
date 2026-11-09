@@ -2,17 +2,17 @@ import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { PanResponder, Platform, Pressable, View } from 'react-native';
 
-import { AgendaRow } from '@/components/AgendaRow';
+import { AgendaRow, GapRow } from '@/components/AgendaRow';
 import { BlockEditor } from '@/components/BlockEditor';
 import { DayStrip } from '@/components/DayStrip';
 import { FinishPanel } from '@/components/FinishPanel';
 import { KindMarker } from '@/components/KindMarker';
 import { Tour } from '@/components/Tour';
-import { fmtClock, fmtDur, kindTotals, plannedMin, type AgendaEntry } from '@/lib/agenda';
-import { blockConflicts, blockEndMs, dayEntries, getTz } from '@/lib/domain';
+import { dayBounds, fmtClock, fmtDur, freeGaps, kindTotals, plannedMin, withGaps, type AgendaEntry } from '@/lib/agenda';
+import { blockConflicts, blockEndMs, dayEntries, getConfig, getTz } from '@/lib/domain';
 import { KINDS, KIND_LABEL } from '@/lib/kinds';
 import { useStore } from '@/lib/store';
-import { addDays, dayLabel, localDate, mondayOf, weekday, WEEKDAYS } from '@/lib/time';
+import { addDays, dayLabel, hmToMin, localDate, localHM, minToHm, mondayOf, weekday, WEEKDAYS } from '@/lib/time';
 import type { Block } from '@/lib/types';
 import { Banner, Empty, interactive, Progress, Row, Screen, Section, SmallBtn, T, useNow, usePhone, useTheme, type PState } from '@/lib/ui';
 import { columnsFor } from '@/theme/layout';
@@ -26,7 +26,7 @@ export default function WeekScreen() {
   const [monday, setMonday] = useState(mondayOf(today));
   const [day, setDay] = useState(today);
   const [width, setWidth] = useState(0);
-  const [editing, setEditing] = useState<Block | 'new' | null>(null);
+  const [editing, setEditing] = useState<Block | 'new' | { start: string; end: string } | null>(null);
   const [finishing, setFinishing] = useState<Block | null>(null);
   const wide = columnsFor(width + 32) > 1;
   const phone = usePhone();
@@ -35,6 +35,12 @@ export default function WeekScreen() {
   const entriesByDay = days.map((d) => dayEntries(data, d).filter((e) => e.kind !== null || e.block !== null));
   const entries = entriesByDay.flat();
   const selected = entriesByDay[days.indexOf(day)] ?? [];
+  // Free slots in the day list, tap one to add a block there (as on Today): from now on today, none on past days.
+  const cfg = getConfig(data);
+  const all = dayEntries(data, day);
+  const bounds = dayBounds(hmToMin(cfg.wake), hmToMin(cfg.hard_stop), all);
+  const gapFrom = day === today ? Math.max(bounds.start, Math.ceil(hmToMin(localHM(now, tz)) / 5) * 5) : day > today ? bounds.start : bounds.end;
+  const rows = withGaps(selected, freeGaps(all, gapFrom, bounds.end));
   const weekMin = plannedMin(entries);
   const doneMin = entries.filter((e) => e.block?.status === 'done' || e.block?.status === 'partial').reduce((s, e) => s + e.end - e.start, 0);
   const totals = kindTotals(entries);
@@ -142,8 +148,10 @@ export default function WeekScreen() {
                 </View>
               ))}
             </View>
-          ) : selected.length ? (
-            <View>{selected.map((e) => <AgendaRow key={e.key} entry={e} clock24={t.clock24} onPress={e.block ? () => setEditing(e.block) : undefined} onFinish={e.block ? () => setFinishing(e.block) : undefined} />)}</View>
+          ) : rows.length ? (
+            <View>{rows.map((x) => x.type === 'gap'
+              ? <GapRow key={`g${x.gap.start}`} gap={x.gap} clock24={t.clock24} onPress={() => setEditing({ start: minToHm(x.gap.start), end: minToHm(Math.min(x.gap.end, 1439)) })} />
+              : <AgendaRow key={x.entry.key} entry={x.entry} clock24={t.clock24} onPress={x.entry.block ? () => setEditing(x.entry.block) : undefined} onFinish={x.entry.block ? () => setFinishing(x.entry.block) : undefined} />)}</View>
           ) : <Empty title="Free day" body="No blocks on this day yet." />}
         </Section>
         {!phone ? <Section title="Week at a glance">
@@ -156,7 +164,7 @@ export default function WeekScreen() {
           </View>
         </Section> : null}
       </View>
-      {editing ? <BlockEditor block={editing === 'new' ? null : editing} date={day} onClose={() => setEditing(null)} /> : null}
+      {editing ? <BlockEditor block={editing === 'new' || 'start' in editing ? null : editing} slot={editing !== 'new' && 'start' in editing ? editing : undefined} date={day} onClose={() => setEditing(null)} /> : null}
       {finishing ? <FinishPanel block={finishing} onClose={() => setFinishing(null)} /> : null}
       <Tour id="week" steps={[{ title: 'Your week', body: 'Every day at a glance, with how much is planned and done. Tap a block to edit or move it.' }]} />
     </Screen>
