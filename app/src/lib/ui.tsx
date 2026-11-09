@@ -105,15 +105,13 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
   window.addEventListener('pointerdown', () => { keyboardNav = false; }, true);
 }
 
-// Web hover and keyboard focus ring; native ignores the extra keys.
+// Web hover and keyboard focus ring. Outline keys are web-only: native RN draws outlineWidth even with outlineStyle 'none'.
 export type PState = { pressed: boolean; hovered?: boolean; focused?: boolean };
 export function interactive(t: Theme, st: PState, disabled?: boolean) {
+  const ring = Platform.OS === 'web' && st.focused && keyboardNav;
   return {
     opacity: disabled ? 0.45 : st.pressed ? 0.8 : 1,
-    outlineStyle: st.focused && keyboardNav && Platform.OS === 'web' ? 'solid' : 'none',
-    outlineWidth: 2,
-    outlineOffset: 2,
-    outlineColor: t.focus,
+    ...(ring ? { outlineStyle: 'solid', outlineWidth: 2, outlineOffset: 2, outlineColor: t.focus } : null),
     filter: st.hovered && !disabled ? 'brightness(1.06)' : undefined,
   } as object;
 }
