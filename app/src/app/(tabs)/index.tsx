@@ -49,6 +49,9 @@ export default function TodayScreen() {
   const fixed = busyOn(data, today);
   const timer = data.active_timer[0] ?? null;
   const dayOff = data.oneoff_blocks.find((o) => o.date === today && o.kind === 'off');
+  // Feedback D: once today's exam has ended, offer the rest of the day off (Carry on hides it until reload).
+  const [examSeen, setExamSeen] = useState(false);
+  const examDone = data.oneoff_blocks.find((o) => o.date === today && o.kind === 'exam' && o.end_time && hmToMin(o.end_time) <= hmToMin(localHM(now, tz)));
   const timerBlock = timer ? data.blocks.find((b) => b.id === timer.block_id) : null;
   const course = (id: string | null) => data.courses.find((c) => c.id === id)?.short ?? '';
 
@@ -146,7 +149,17 @@ export default function TodayScreen() {
           <Row><SmallBtn filled title="Review plan" onPress={() => router.push('/plan')} /></Row>
           <Row><SmallBtn title="Undo day off" onPress={undoDayOff} /></Row>
         </Banner>
-      ) : timer ? null : (
+      ) : examDone && !examSeen ? (
+        <Banner tone="info">
+          <T bold>{examDone.label.replace(/^Exam: /, '')} is done</T>
+          <T muted>Take the rest of today off? Today's study moves to later this week.</T>
+          <Row wrap>
+            <SmallBtn filled title="Take rest of day off" onPress={() => setDayOffOpen(true)} />
+            <SmallBtn ghost title="Carry on" onPress={() => setExamSeen(true)} />
+          </Row>
+        </Banner>
+      ) : null}
+      {dayOff || timer ? null : (
         <Row>
           <SmallBtn title="Take a break" onPress={() => setBreakOpen(true)} />
           <SmallBtn title="Day off" onPress={() => setDayOffOpen(true)} />
