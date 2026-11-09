@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTimeline, dayBounds, fmtClock, fmtDur, freeGaps, kindDots, kindTotals, nowState, overLimit, plannedMin, withGaps, type AgendaEntry } from './agenda.ts';
-import type { Block } from './types.ts';
+import { buildTimeline, dayBounds, fmtClock, fmtDur, freeGaps, kindDots, kindTotals, nowState, overdue, overLimit, plannedMin, withGaps, type AgendaEntry } from './agenda.ts';
+import type { Block, Item } from './types.ts';
 
 const hm = (s: string) => Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5));
 const blk = (id: string, s: string, e: string, extra: Partial<Block> = {}): Block => ({
@@ -100,4 +100,16 @@ test('overLimit lists the latest auto study blocks past the cap, never hand-plac
   assert.equal(total, 240);
   assert.deepEqual(moves.map((x) => x.id), ['c', 'd']);
   assert.deepEqual(overLimit(blocks, 150, 14 * 60).moves.map((x) => x.id), ['d']); // c already ended
+});
+
+test('overdue keeps active non-exam items past due with work left, oldest first', () => {
+  const it = (id: string, due: string | null, extra: Partial<Item> = {}) => ({ id, due_at: due, status: 'active', type: 'homework', ...extra }) as unknown as Item;
+  const items = [
+    it('late2', '2026-11-08T10:00:00Z'), it('late1', '2026-11-05T10:00:00Z'), it('future', '2026-11-20T10:00:00Z'), it('nodue', null),
+    it('exam', '2026-11-04T10:00:00Z', { type: 'exam' }), it('quiz', '2026-11-04T10:00:00Z', { type: 'quiz' }), it('done', '2026-11-04T10:00:00Z', { status: 'done' }), it('finished', '2026-11-04T10:00:00Z'),
+  ];
+  const left = (i: Item) => (i.id === 'finished' ? 0 : 60);
+  const r = overdue(items, left, Date.parse('2026-11-09T12:00:00Z'));
+  assert.deepEqual(r.map((x) => x.item.id), ['late1', 'late2']);
+  assert.equal(r[0].left, 60);
 });
