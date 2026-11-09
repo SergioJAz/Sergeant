@@ -1,6 +1,6 @@
 // Pure day-agenda model: timeline, free gaps, now/next, bounds, kind totals, clock format. Minutes are minutes of the local day.
 import { KINDS, kindOfBlock, type Kind } from './kinds.ts';
-import type { Block } from './types.ts';
+import type { Block, Item } from './types.ts';
 
 export type Anchor = { label: string; start: number; end: number; kind: Kind | null };
 export type AgendaEntry = { key: string; start: number; end: number; title: string; kind: Kind | null; finished: boolean; block: Block | null };
@@ -90,4 +90,14 @@ export function overLimit(blocks: Block[], limitMin: number, nowMin: number) {
     over -= min(b.end_time) - min(b.start_time);
   }
   return { total, moves };
+}
+
+// Overdue: active items past their due time with work left, oldest due first.
+// Exams and quizzes are skipped: once sat, leftover prep is not late work.
+export function overdue(items: Item[], leftMin: (i: Item) => number, nowMs: number) {
+  return items
+    .filter((i) => i.status === 'active' && i.type !== 'exam' && i.type !== 'quiz' && i.due_at && Date.parse(i.due_at) < nowMs)
+    .map((item) => ({ item, left: leftMin(item) }))
+    .filter((x) => x.left > 0)
+    .sort((a, b) => Date.parse(a.item.due_at!) - Date.parse(b.item.due_at!));
 }

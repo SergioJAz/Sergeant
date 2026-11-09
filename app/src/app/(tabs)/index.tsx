@@ -15,8 +15,8 @@ import { TodaySide } from '@/components/TodaySide';
 import { TodoList } from '@/components/TodoList';
 import { Tour } from '@/components/Tour';
 import { configOp, moveBlock } from '@/lib/actions';
-import { dayBounds, fmtClock, fmtDur, freeGaps, overLimit, plannedMin, withGaps } from '@/lib/agenda';
-import { blockEndMs, blockMinutes, blockStartMs, blocksOn, busyOn, dayEntries, getConfig, getTz } from '@/lib/domain';
+import { dayBounds, fmtClock, fmtDur, freeGaps, overdue, overLimit, plannedMin, withGaps } from '@/lib/agenda';
+import { activeChunks, blockEndMs, blockMinutes, blockStartMs, blocksOn, busyOn, dayEntries, getConfig, getTz, remainingMin } from '@/lib/domain';
 import { requestPermission, useNotifyState } from '@/lib/notify';
 import { useStore } from '@/lib/store';
 import { addDays, hmToMin, localDate, localHM, minToHm } from '@/lib/time';
@@ -65,6 +65,10 @@ export default function TodayScreen() {
   // Work limit (Settings): study planned today against the cap; Keep going lifts it for today and replans.
   const limit = overLimit(blocks, cfg.daily_limit_min, hmToMin(localHM(now, tz)));
   const limitOn = cfg.daily_limit_min > 0 && !cfg.limit_off_dates.includes(today);
+  // Overdue: past due with work left (chunks not skipped); an archived course hides its items too.
+  const shelved = new Set(data.courses.filter((c) => c.status === 'archived').map((c) => c.id));
+  const late = overdue(data.items.filter((i) => !shelved.has(i.course_id)),(i) => activeChunks(data, i.id).filter((c) => c.status !== 'skipped').reduce((s, c) => s + remainingMin(data, c), 0), now);
+  const dueDay = (iso: string) => new Intl.DateTimeFormat('en-GB', { timeZone: tz, weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(iso)).replace(',', '');
   function keepGoing() {
     void write([configOp(data, { limit_off_dates: [...cfg.limit_off_dates.filter((d) => d >= addDays(today, -14)), today] })]).then(() => router.push('/plan'));
   }
@@ -193,6 +197,18 @@ export default function TodayScreen() {
             );
           })}
           <Row><SmallBtn ghost title="Replan my week" onPress={() => router.push('/plan')} /></Row>
+        </Card>
+      ) : null}
+
+      {late.length ? (
+        <Card tone="danger">
+          <T bold color={t.danger}>Overdue {late.length === 1 ? 'item' : `${late.length} items`}</T>
+          {late.map(({ item, left }) => (
+            <Row key={item.id} style={{ justifyContent: 'space-between' }}>
+              <View style={{ flexShrink: 1 }}><T>{`${course(item.course_id)} ${item.title} · ${fmtDur(left)} left · due ${dueDay(item.due_at!)}`}</T></View>
+              <SmallBtn title="Open" label={`Open ${item.title}`} onPress={() => router.push(`/item/${item.id}`)} />
+            </Row>
+          ))}
         </Card>
       ) : null}
     </Section>
