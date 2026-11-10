@@ -63,7 +63,11 @@ export default function TodayScreen() {
   // Behind / ahead: planned study minutes that should be done by now vs minutes actually logged today.
   const study = blocks.filter((b) => !['Break', 'Rest', 'Fixed'].includes(b.type));
   const dueMin = study.filter((b) => blockEndMs(b, tz) <= now).reduce((s, b) => s + blockMinutes(b), 0);
-  const doneMin = data.time_logs.filter((l) => !l.deleted_at && localDate(Date.parse(l.started_at), tz) === today).reduce((s, l) => s + l.actual_min, 0);
+  // A late tick on yesterday's missed block is logged now but is yesterday's work, so a log counts on its block's day.
+  const blockDay = new Map(data.blocks.map((b) => [b.id, b.date]));
+  const doneMin = data.time_logs
+    .filter((l) => !l.deleted_at && (blockDay.get(l.block_id ?? '') ?? localDate(Date.parse(l.started_at), tz)) === today)
+    .reduce((s, l) => s + l.actual_min, 0);
   const diff = doneMin - dueMin;
   // Work limit (Settings): study planned today against the cap; Keep going lifts it for today and replans.
   const limit = overLimit(blocks, cfg.daily_limit_min, hmToMin(localHM(now, tz)));
