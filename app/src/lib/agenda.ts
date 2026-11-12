@@ -70,6 +70,24 @@ export function fmtClock(m: number, clock24: boolean): string {
   return `${h12}:${mm}${h % 24 < 12 ? 'am' : 'pm'}`;
 }
 
+// Time-field text for 'HH:MM': no leading zero ('9:05'); 12h users get 1-12 plus a pm flag.
+export function hmToField(hm: string, clock24: boolean): { text: string; pm: boolean } {
+  const h = Number(hm.slice(0, 2)), mm = hm.slice(3, 5);
+  return { text: `${clock24 ? h : h % 12 || 12}:${mm}`, pm: h >= 12 };
+}
+
+// Typed time back to 'HH:MM', or null. Takes 9, 9:30, 9.30, 930, 1330 (':' or '.' optional).
+export function fieldToHm(text: string, clock24: boolean, pm: boolean): string | null {
+  const m = /^(\d{1,2})(?:[:.]?(\d{2}))?$/.exec(text.trim());
+  if (!m) return null;
+  let h = Number(m[1]);
+  const mm = Number(m[2] ?? 0);
+  if (mm > 59) return null;
+  if (clock24) { if (h > 23) return null; }
+  else { if (h < 1 || h > 12) return null; h = (h % 12) + (pm ? 12 : 0); }
+  return `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
 export function fmtDur(m: number): string {
   const h = Math.floor(m / 60), r = m % 60;
   return h && r ? `${h}h ${r}m` : h ? `${h}h` : `${r}m`;
