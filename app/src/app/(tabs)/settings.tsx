@@ -52,7 +52,7 @@ export default function SettingsScreen() {
     }
     const [study, brk, long, every, sw, rest, horizon, limit] = nums;
     await saveConfig({
-      wake: r.wake, hard_stop: r.hard_stop, review: { start: r.review_start, end: r.review_end }, lunch: { start: r.lunch_start, end: r.lunch_end },
+      wake: r.wake, hard_stop: r.hard_stop, review: { start: r.review_start, end: r.review_end, on: cfg.review.on }, lunch: { start: r.lunch_start, end: r.lunch_end },
       sunday_off_from: r.sunday_off_from, pomodoro: { study_min: study, break_min: brk, long_break_min: long, long_break_every: every },
       switch_after_blocks: sw, rest_after_exam_min: rest, horizon_days: Math.min(28, Math.max(1, horizon)),
       daily_limit_min: Math.round(Math.min(24, limit) * 60),
@@ -129,6 +129,7 @@ export default function SettingsScreen() {
               <Field label="Long break min" value={r.long} onChange={(v) => setR({ ...r, long: v })} keyboard="numeric" />
               <Field label="Long break every N" value={r.every} onChange={(v) => setR({ ...r, every: v })} keyboard="numeric" />
             </Row>
+            <Toggle label="Add a Daily review block each day" value={cfg.review.on} onChange={(v) => void saveConfig({ review: { ...cfg.review, on: v } })} />
             <Row wrap>
               <Field label="Review start" value={r.review_start} onChange={(v) => setR({ ...r, review_start: v })} />
               <Field label="Review end" value={r.review_end} onChange={(v) => setR({ ...r, review_end: v })} />

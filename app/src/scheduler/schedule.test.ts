@@ -141,7 +141,7 @@ test('defaults, 0..6 weekdays and DB column names give the same plan', () => {
     const base = schedule(f.input);
     const db: ScheduleInput = {
       ...f.input,
-      settings: {},
+      settings: { review: { on: true } }, // fixtures opt in to daily review; everything else is default
       fixedEvents: f.input.fixedEvents.map((e) => ({ ...e, weekdays: e.weekdays.map((w) => w % 7) })),
       blocks: f.input.blocks.map(({ start, end, ...b }) => ({ ...b, start_time: `${start}:00`, end_time: `${end}:00` })),
       chunks: f.input.chunks.map(({ order, ...c }) => ({ ...c, position: order })),
@@ -199,4 +199,13 @@ test('daily limit caps study minutes per day; limit_off_dates lifts it for that 
   for (const [d, m] of capped) assert.ok(m <= 100, `${d} has ${m} min`);
   const lifted = perDay(schedule({ ...input, settings: { ...input.settings, daily_limit_min: 100, limit_off_dates: [first] } }));
   assert.equal(lifted.get(first), free.get(first));
+});
+
+test('daily review is opt-in: off by default adds no Review block and frees its time', () => {
+  const input = fx('01').input;
+  const reviews = (r: ReturnType<typeof schedule>) => r.blocks.filter((b) => b.what === 'Daily review');
+  assert.ok(reviews(schedule(input)).length > 0, 'fixture has review on');
+  const off = schedule({ ...input, settings: { ...input.settings, review: { start: '22:00', end: '22:30' } } }); // saved config with no 'on' flag
+  assert.equal(reviews(off).length, 0);
+  assert.ok(off.blocks.some((b) => b.start_time < '22:30:00' && b.end_time > '22:00:00'), 'review time is free for other blocks');
 });

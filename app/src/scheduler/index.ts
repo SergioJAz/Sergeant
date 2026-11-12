@@ -18,7 +18,7 @@ export type Settings = {
   switch_after_blocks: number;
   wake: string;
   hard_stop: string;
-  review: { start: string; end: string };
+  review: { start: string; end: string; on: boolean }; // on: add a Daily review block each day (opt-in)
   lunch: { start: string; end: string };
   sunday_off_from: string;
   rest_after_exam_min: number;
@@ -35,7 +35,7 @@ export const DEFAULT_SETTINGS: Settings = {
   switch_after_blocks: 2,
   wake: '08:20',
   hard_stop: '23:00',
-  review: { start: '22:00', end: '22:30' },
+  review: { start: '22:00', end: '22:30', on: false },
   lunch: { start: '13:00', end: '14:00' },
   sunday_off_from: '14:00',
   rest_after_exam_min: 50,
@@ -319,6 +319,7 @@ export function schedule(input: ScheduleInput): ScheduleOutput {
   for (const d of dates) {
     soft.push({ s: at(d, st.lunch.start), e: at(d, st.lunch.end), kind: 'soft', id: 'lunch' });
     if (weekday(d) === 0) soft.push({ s: at(d, st.sunday_off_from), e: at(addDays(d, 1), '00:00'), kind: 'soft', id: 'sunday' });
+    if (!st.review.on) continue;
     const review = { s: at(d, st.review.start), e: at(d, st.review.end) };
     if (inHorizon(review.s) && ![...hard, ...soft].some((h) => overlaps(h, review))) emit(review.s, review.e, 'Review', 'Daily review', null, []);
     soft.push({ ...review, kind: 'soft', id: 'review' });

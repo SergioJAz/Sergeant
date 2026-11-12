@@ -130,7 +130,7 @@ Order (lower number never yields to higher):
 1. Preserve history and protected records (done/partial/skipped blocks, locked, source claude, active timer block).
 2. Fixed events, one-offs, exams (with travel), sleep, `never_cut` sport.
 3. Hard stop 23:00, wake time, laptop needs (informational only, Q5).
-4. Rest after exam, daily review 22:00 to 22:30, breaks and long breaks, Sunday off from 14:00, lunch 13:00 to 14:00.
+4. Rest after exam, daily review 22:00 to 22:30 (only when the Daily review setting is on; off by default since feedback H7), breaks and long breaks, Sunday off from 14:00, lunch 13:00 to 14:00.
 5. Study time by pressure, chunks in order.
 6. 2-then-switch, fresh-slot preference.
 

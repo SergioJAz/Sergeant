@@ -9,7 +9,7 @@ export const DEFAULT_CONFIG = {
   switch_after_blocks: 2,
   wake: '08:20',
   hard_stop: '23:00',
-  review: { start: '22:00', end: '22:30' },
+  review: { start: '22:00', end: '22:30', on: false }, // on: Daily review blocks are opt-in
   lunch: { start: '13:00', end: '14:00' },
   sunday_off_from: '14:00',
   rest_after_exam_min: 50,
@@ -24,7 +24,7 @@ export type Config = typeof DEFAULT_CONFIG;
 
 export function getConfig(data: Data): Config {
   const c = data.settings[0]?.config ?? {};
-  return { ...DEFAULT_CONFIG, ...c, pomodoro: { ...DEFAULT_CONFIG.pomodoro, ...c.pomodoro }, notify: { ...DEFAULT_CONFIG.notify, ...c.notify } };
+  return { ...DEFAULT_CONFIG, ...c, pomodoro: { ...DEFAULT_CONFIG.pomodoro, ...c.pomodoro }, review: { ...DEFAULT_CONFIG.review, ...c.review }, notify: { ...DEFAULT_CONFIG.notify, ...c.notify } };
 }
 
 export function getTz(data: Data) {
