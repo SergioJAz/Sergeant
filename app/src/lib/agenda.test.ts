@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTimeline, dayBounds, fmtClock, fmtDur, freeGaps, kindDots, kindTotals, nowState, overdue, overLimit, plannedMin, withGaps, type AgendaEntry } from './agenda.ts';
+import { buildTimeline, dayBounds, fieldToHm, fmtClock, fmtDur, freeGaps, hmToField, kindDots, kindTotals, nowState, overdue, overLimit, plannedMin, withGaps, type AgendaEntry } from './agenda.ts';
 import type { Block, Item } from './types.ts';
 
 const hm = (s: string) => Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5));
@@ -81,6 +81,29 @@ test('plannedMin, kindTotals, kindDots count kinds and skip neutral anchors and 
   assert.deepEqual(kindTotals(e), { uni: 90, proj: 0, train: 90, err: 0 });
   assert.deepEqual(kindDots(e), ['uni', 'train']);
 });
+test('time field text round-trips without leading zero, 12h with pm flag', () => {
+  assert.deepEqual(hmToField('09:05', true), { text: '9:05', pm: false });
+  assert.deepEqual(hmToField('13:30', true), { text: '13:30', pm: true });
+  assert.deepEqual(hmToField('00:15', false), { text: '12:15', pm: false });
+  assert.deepEqual(hmToField('12:00', false), { text: '12:00', pm: true });
+  assert.deepEqual(hmToField('21:45', false), { text: '9:45', pm: true });
+  for (const hm of ['00:00', '09:05', '12:00', '12:59', '13:30', '23:59']) {
+    for (const c24 of [true, false]) {
+      const f = hmToField(hm, c24);
+      assert.equal(fieldToHm(f.text, c24, f.pm), hm);
+    }
+  }
+  assert.equal(fieldToHm('9', true, false), '09:00');
+  assert.equal(fieldToHm('930', true, false), '09:30');
+  assert.equal(fieldToHm('9.30', true, false), '09:30');
+  assert.equal(fieldToHm('1330', true, false), '13:30');
+  assert.equal(fieldToHm(' 09:30 ', true, false), '09:30');
+  assert.equal(fieldToHm('12:10', false, false), '00:10');
+  assert.equal(fieldToHm('2:40', false, true), '14:40');
+  for (const bad of ['', '24:00', '9:60', '9:5', 'abc', '12345']) assert.equal(fieldToHm(bad, true, false), null, bad);
+  for (const bad of ['0:30', '13:00']) assert.equal(fieldToHm(bad, false, false), null, bad);
+});
+
 test('fmtClock and fmtDur', () => {
   assert.equal(fmtClock(hm('09:05'), true), '09:05');
   assert.equal(fmtClock(1440, true), '24:00');
