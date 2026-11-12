@@ -10,7 +10,7 @@ import { activeChunks, getTz, pressure, remainingMin } from '@/lib/domain';
 import { pickTextFiles, saveFile } from '@/lib/files';
 import { useStore, uuid } from '@/lib/store';
 import { addDays, localDate } from '@/lib/time';
-import { Banner, Btn, Card, Chips, Field, H, Row, Screen, SmallBtn, T, Toggle, useTheme } from '@/lib/ui';
+import { Banner, Btn, Card, Check, Chips, Field, H, Row, Screen, SmallBtn, T, Toggle, useTheme } from '@/lib/ui';
 
 type Range = 'all' | '7d' | 'since';
 
@@ -183,8 +183,10 @@ export default function IoScreen() {
               return (
                 <Card key={r.key} style={r.status === 'error' ? { borderColor: t.danger } : undefined}>
                   <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: on, disabled: r.status === 'error' }} disabled={r.status === 'error'}
-                    onPress={() => setSelected(on ? deselectWithDependents(preview, selected, r.key) : selectWithDeps(preview, [...selected, r.key]))}>
-                    <T>{r.status === 'error' ? 'x' : on ? '[x]' : '[ ]'} {r.file} line {r.line}: {r.op} {r.entity}{r.payload.date ? ` ${r.payload.date} ${r.payload.start_time ?? ''}` : ''} {String(r.payload.what ?? r.payload.title ?? '')}</T>
+                    onPress={() => setSelected(on ? deselectWithDependents(preview, selected, r.key) : selectWithDeps(preview, [...selected, r.key]))}
+                    style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                    <Check on={on} disabled={r.status === 'error'} />
+                    <View style={{ flex: 1 }}><T>{r.file} line {r.line}: {r.op} {r.entity}{r.payload.date ? ` ${r.payload.date} ${r.payload.start_time ?? ''}` : ''} {String(r.payload.what ?? r.payload.title ?? '')}</T></View>
                   </Pressable>
                   {r.errors.map((e, i) => <T key={i} color={t.danger} size={13}>{e.field ? `${e.field}: ` : ''}{e.message}{e.candidates ? ` (${e.candidates.join(', ')})` : ''}</T>)}
                   {r.depends_on.length ? <T muted size={13}>Needs: {r.depends_on.join(', ')}</T> : null}

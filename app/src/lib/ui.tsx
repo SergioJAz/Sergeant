@@ -304,6 +304,17 @@ export function Toggle({ label, value, onChange }: { label: string; value: boole
   );
 }
 
+/** Visual box only; the parent Pressable owns the checkbox role and press. */
+export function Check({ on, disabled }: { on: boolean; disabled?: boolean }) {
+  const t = useTheme();
+  const c = disabled ? t.danger : on ? t.primary : t.border;
+  return (
+    <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: c, backgroundColor: on && !disabled ? t.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+      {disabled ? <Text style={{ color: t.danger, fontSize: 12, fontWeight: '800' }}>✕</Text> : on ? <Text style={{ color: t.onPrimary, fontSize: 12, fontWeight: '800' }}>✓</Text> : null}
+    </View>
+  );
+}
+
 export function Banner({ children, tone = 'warn' }: { children: ReactNode; tone?: 'warn' | 'danger' | 'info' }) {
   const t = useTheme();
   const bg = tone === 'danger' ? t.dangerBg : tone === 'warn' ? t.warnBg : t.primarySoft;
