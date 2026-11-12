@@ -1,13 +1,13 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { useAuth } from '@/lib/auth';
 import { getConfig } from '@/lib/domain';
 import { diffPlan, recheck, runSchedule } from '@/lib/plan';
 import { useStore, type WriteInput } from '@/lib/store';
 import { dayLabel } from '@/lib/time';
-import { Banner, Btn, Card, H, Row, Screen, SmallBtn, T, useTheme } from '@/lib/ui';
+import { Banner, Btn, Card, Check, H, Row, Screen, SmallBtn, T, useTheme } from '@/lib/ui';
 
 export default function PlanScreen() {
   const { data, write, status } = useStore();
@@ -80,7 +80,7 @@ export default function PlanScreen() {
         return (
           <Pressable key={b.id} accessibilityRole="checkbox" accessibilityState={{ checked: on }} onPress={() => toggle(skipAdd, b.id, setSkipAdd)}>
             <Card style={bad.has(b.id) && on ? { borderColor: t.danger, borderWidth: 2 } : undefined}>
-              <T>{on ? '[x]' : '[ ]'} {dayLabel(b.date)} {b.start_time} to {b.end_time} {course(b.course_id)} {b.what} ({b.type})</T>
+              <Row style={{ alignItems: 'flex-start' }}><Check on={on} /><View style={{ flex: 1 }}><T muted={!on}>{dayLabel(b.date)} {b.start_time} to {b.end_time} {course(b.course_id)} {b.what} ({b.type})</T></View></Row>
               {bad.has(b.id) && on ? <T color={t.danger}>Overlaps a block that stays. Untick it or keep the removal.</T> : null}
             </Card>
           </Pressable>
@@ -94,7 +94,7 @@ export default function PlanScreen() {
         return (
           <Pressable key={b.id} accessibilityRole="checkbox" accessibilityState={{ checked: on }} onPress={() => toggle(skipRemove, b.id, setSkipRemove)}>
             <Card>
-              <T>{on ? '[x]' : '[ ]'} {dayLabel(b.date)} {b.start_time.slice(0, 5)} to {b.end_time.slice(0, 5)} {course(b.course_id)} {b.what ?? b.type}</T>
+              <Row style={{ alignItems: 'flex-start' }}><Check on={on} /><View style={{ flex: 1 }}><T muted={!on}>{dayLabel(b.date)} {b.start_time.slice(0, 5)} to {b.end_time.slice(0, 5)} {course(b.course_id)} {b.what ?? b.type}</T></View></Row>
             </Card>
           </Pressable>
         );
