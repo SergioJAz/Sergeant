@@ -53,15 +53,15 @@ export function BlockEditor({ block, date, slot, onClose }: { block: Block | nul
   // Now: today at the current minute, keeping the block's length (end capped at 23:59).
   function startNow() {
     const tz = getTz(data), ms = Date.now();
-    const s = localHM(ms, tz);
+    const s = minToHm(Math.min(hmToMin(localHM(ms, tz)), 1438)); // at 23:59 still leave a minute
     const len = start && end && end > start ? hmToMin(end) - hmToMin(start) : 50;
     const sf = hmToField(s, t.clock24), ef = hmToField(minToHm(Math.min(hmToMin(s) + len, 1439)), t.clock24);
     set({ date: localDate(ms, tz), start: sf.text, startPm: sf.pm, end: ef.text, endPm: ef.pm });
   }
 
   async function save() {
-    if (!start || !end || !validTimes) return setErr(`Use YYYY-MM-DD for date and a time like ${t.clock24 ? '9:30 or 13:30' : '9:30'} for start and end.`);
-    if (end <= start) return setErr('End must be after start (blocks cannot cross midnight).');
+    if (!start || !end || !validTimes) return setErr(`Use YYYY-MM-DD for date and a time like ${t.clock24 ? '9:30 or 13:30' : '9:30'} (9.30 or 930 also work) for start and end.`);
+    if (end <= start) return setErr(`End must be after start (blocks cannot cross midnight).${t.clock24 ? '' : ' Check AM/PM.'}`);
     const payload = {
       date: f.date, start_time: start, end_time: end, course_id: f.course_id, item_id: f.item_id,
       chunk_ids: f.chunk_ids, what: f.what || null, type: f.type, subtasks: textToSubtasks(f.subtasks), locked: f.locked,
